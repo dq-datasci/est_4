@@ -47,7 +47,7 @@ summary(data.vg)
 ```{r}
 str(data.vg.raw)
 unique(data.vg.raw$Year)
-filter(data.vg.raw, Year=="N/A")
+head(filter(data.vg.raw, Year=="N/A"))
 
 ```
 
@@ -89,19 +89,19 @@ A año le faltan 271 valores (aprox 1,63%). Dado que este porcentajee es muy peq
 # DataFrame de ejemplo con missing values
 
 print("DataFrame original:")
-print(data.vg)
+print(head(data.vg))
 cat("Filas originales:", nrow(data.vg), "\n\n")
 
 # Método 1: na.omit() - Elimina filas con cualquier NA
 df_sin_na <- na.omit(data.vg)
 print("Con na.omit():")
-print(df_sin_na)
+print(head(df_sin_na))
 cat("Filas después de na.omit():", nrow(df_sin_na), "\n\n")
 
 # Método 2: complete.cases() - Más control
 df_completo <- data.vg[complete.cases(data.vg), ]
 print("Con complete.cases():")
-print(df_completo)
+print(head(df_completo))
 cat("Filas después de complete.cases():", nrow(df_completo), "\n")
 
 ```
