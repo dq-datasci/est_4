@@ -1,0 +1,67 @@
+---
+title: "Análisis Estadístico de Ventas de Videojuegos"
+author: "David Quintela"
+date: "2025-10-02"
+output: 
+  github_document: default
+  html_document: default
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding, output_format = "all") })
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#Librerias
+``` {r librerias}
+library(tidyverse)
+library(knitr) # Para crear tablas con formato
+```
+
+#Lectura de datos
+```{r datos}
+sales_data <- read.csv("vgsales.csv")
+head(sales_data)
+summary(sales_data)
+```
+# Transformación de los datos
+``` {r}
+sales_data$Year <- as.integer(sales_data$Year)
+sales_data$Genre <- as.factor(sales_data$Genre)
+sales_data$Platform <- as.factor(sales_data$Platform)
+sales_data$Publisher <- as.factor(sales_data$Publisher)
+sales_data$Name <- as.factor(sales_data$Name)
+```
+
+```{r}
+summary(sales_data)
+```
+```{r}
+# Crear un nuevo dataframe que contenga solo las filas con nombres duplicados
+# Usamos duplicated() desde el inicio y desde el final para asegurarnos de incluir todas las apariciones del duplicado
+duplicated_names_df <- sales_data[duplicated(sales_data$Name) | duplicated(sales_data$Name, fromLast = TRUE), ]
+
+# Ordenar el nuevo dataframe por la columna 'Name' para ver los duplicados juntos
+# Esto es opcional, pero hace mucho más fácil la visualización
+sorted_duplicates <- duplicated_names_df[order(duplicated_names_df$Name), ]
+
+# Mostrar las primeras filas del dataframe con los duplicados
+# Puedes cambiar el número 10 para ver más o menos filas
+head(sorted_duplicates, 10)
+length(unique(sales_data$Name))
+```
+```{r}
+filter(data)
+```
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

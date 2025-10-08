@@ -1,0 +1,27 @@
+# Archivos de Historial y Sesión de R
+.Rhistory
+.RData
+.Ruserdata
+
+# Archivos específicos del usuario de RStudio
+.Rproj.user/
+
+# Archivos de entorno que pueden contener secretos
+.Renviron
+
+# Reglas para el paquete RENV
+# Ignora todo dentro de la carpeta renv...
+renv/
+# ...EXCEPTO estos archivos importantes que SÍ deben subirse.
+!renv/activate.R
+!renv/settings.json
+!renv/settings.dcf
+
+# Cache de R Markdown y Knitr
+*_cache/
+/cache/
+
+# Archivos de salida comunes (opcional, puedes quitar estas líneas si quieres subir los HTMLs)
+*.html
+*.pdf
+
