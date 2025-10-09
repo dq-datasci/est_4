@@ -76,7 +76,7 @@ print(round(porcentaje_na, 2))
 
 
 ```{r}
-unique(data.vg$Publisher)
+head(unique(data.vg$Publisher))
 filter(data.vg, Publisher==" ")
 
 ```
@@ -120,7 +120,7 @@ hist(filter(data.vg, Global_Sales < 5)$Global_Sales)
 set.seed(13)
 N <- dim(data.vg)[1]
 indices_muestra <- sample(1:N, 200, replace = TRUE)
-data.muestra <- data.vg[indices_muestra,];data.muestra
+data.muestra <- data.vg[indices_muestra,];head(data.muestra)
 summary(data.muestra$Global_Sales)
 ```
 # Tendencia Central
