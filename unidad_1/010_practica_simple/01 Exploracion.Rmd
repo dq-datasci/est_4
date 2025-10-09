@@ -105,8 +105,24 @@ print(head(df_completo))
 cat("Filas después de complete.cases():", nrow(df_completo), "\n")
 
 ```
-
-
+```{r}
+data.vg <- data.vg[complete.cases(data.vg),]
+dim(data.vg)
+```
+```{r}
+summary(data.vg$Global_Sales)
+hist(data.vg$Global_Sales)
+```
+```{r}
+hist(filter(data.vg, Global_Sales < 5)$Global_Sales)
+```
+```{r}
+set.seed(13)
+N <- dim(data.vg)[1]
+indices_muestra <- sample(1:N, 200, replace = TRUE)
+data.muestra <- data.vg[indices_muestra,];data.muestra
+summary(data.muestra$Global_Sales)
+```
 # Tendencia Central
 
 ```{r}
