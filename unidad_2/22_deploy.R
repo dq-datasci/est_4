@@ -10,3 +10,4 @@ rsconnect::deployApp(appDir = "C://Users/HP/Projects/est_4/unidad_2/22_shiny/",
 
 
 rsconnect::showLogs(appName = "22_myapp")
+
