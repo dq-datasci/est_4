@@ -5,6 +5,6 @@ account: dqdatasci
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 15853414
-bundleId: 11141075
+bundleId: 11146249
 url: https://dqdatasci.shinyapps.io/21_myapp/
 version: 1

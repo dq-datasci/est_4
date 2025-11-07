@@ -1,0 +1,30 @@
+{
+  "name": "Proyecto de Estadística 4",
+  // Usaremos una imagen pre-construida por Rocker que incluye R 4.4 y RStudio
+  "image": "rocker/r-ver:4.4.1",
+
+  "features": {
+    // Añade Git para control de versiones
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "REditorSupport.r", // Soporte para R
+        "RDebugger.r-debugger" // Debugger para R
+      ]
+    }
+  },
+
+  // Ejecuta esto después de crear el contenedor
+  "postCreateCommand": "R -e 'renv::restore()'",
+
+  // Redirige RStudio Server (que viene en la imagen) al puerto 8787
+  "forwardPorts": [8787],
+  "portsAttributes": {
+    "8787": {
+      "label": "RStudio Server"
+    }
+  }
+}
