@@ -25,3 +25,6 @@ renv/
 *.html
 *.pdf
 
+# Ignorar archivos de variables de entorno en cualquier lugar
+**/.env
+
