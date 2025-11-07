@@ -18,8 +18,7 @@
   },
 
   // Ejecuta esto después de crear el contenedor
-  "postCreateCommand": "R -e 'renv::restore()'",
-
+  "postCreateCommand": "R -e \"install.packages('renv'); renv::restore()\"",
   // Redirige RStudio Server (que viene en la imagen) al puerto 8787
   "forwardPorts": [8787],
   "portsAttributes": {
