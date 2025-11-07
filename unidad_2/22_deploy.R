@@ -1,13 +1,26 @@
-# install.packages("rsconnect")
+# Cargar paquetes
 library(rsconnect)
+library(here)
+library(dotenv)
 
-rsconnect::setAccountInfo(name='dqdatasci',
-                          token='55BD8E47CE6658D123F9A1528A45110A',
-                          secret='7SogJUYNK6UfEyrW1OcQssk+LdGGLMp8/TemclU/')
+# Cargar variables de entorno desde el archivo .env
+# Esto busca el archivo .env en la raíz del proyecto (unidad_2)
+load_dot_env(file = here::here(".env"))
 
-rsconnect::deployApp(appDir = "C://Users/HP/Projects/est_4/unidad_2/22_shiny/",
-                     appName = "22_myapp")
+# Configurar la cuenta usando las variables de entorno
+# rsconnect busca automáticamente las variables SHINYAPPS_ACCOUNT,
+# SHINYAPPS_TOKEN, y SHINYAPPS_SECRET si existen.
+# Pero para ser explícitos (y por si tienen otros nombres), las leemos:
+rsconnect::setAccountInfo(
+  name   = Sys.getenv("SHINYAPPS_NAME"),
+  token  = Sys.getenv("SHINYAPPS_TOKEN"),
+  secret = Sys.getenv("SHINYAPPS_SECRET")
+)
 
+rsconnect::deployApp(
+  appDir = here::here("22_shiny"), 
+  appName = "22_myapp"
+)
 
+# Mostrar logs
 rsconnect::showLogs(appName = "22_myapp")
-
