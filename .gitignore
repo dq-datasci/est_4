@@ -21,9 +21,13 @@ renv/
 *_cache/
 /cache/
 
-# Archivos de salida comunes (opcional, puedes quitar estas líneas si quieres subir los HTMLs)
-*.html
+# Archivos de salida comunes
+# *.html
 *.pdf
+# Ignoraremos los archivos md intermedios ya que estaremos usando los html como última presentación
+# *.md
+# Excepto los README
+# !README.md
 
 # Ignorar archivos de variables de entorno en cualquier lugar
 **/.env
