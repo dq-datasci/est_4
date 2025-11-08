@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Restaurar Entorno: Unidad 1",
+      "type": "shell",
+      "command": "./.scripts/init_unidad_1.sh",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "clear": true
+      }
+    },
+    {
+      "label": "Restaurar Entorno: Unidad 2",
+      "type": "shell",
+      "command": "./.scripts/init_unidad_2.sh",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "clear": true
+      }
+    }
+  ]
+}
