@@ -20,7 +20,7 @@ library(knitr) # Para crear tablas con formato
 # --------------------------------------------------------------------------
 # Cargar el archivo CSV en un dataframe de R.
 # Asegúrate de que el archivo 'vgsales.csv' esté en tu directorio de trabajo.
-sales_data <- read.csv("vgsales.csv")
+sales_data <- read.csv(here::here("data", "vgsales.csv"))
 
 # Ver las primeras filas del conjunto de datos para entender su estructura.
 cat("### Primeras filas del conjunto de datos ###\n")

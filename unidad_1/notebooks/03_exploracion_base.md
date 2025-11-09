@@ -8,7 +8,6 @@ Ruben Cabrera
 ``` r
 #library(mrgsolve)
 library(ggplot2)
-
 library(dplyr)
 ```
 
@@ -26,10 +25,7 @@ library(dplyr)
 # Letura de datos
 
 ``` r
-data_path <- file.path("C://Users/HP/Projects/est_4/unidad_1/010_practica_simple")
-data_file <- file.path(data_path, "vgsales.csv")
-data.vg.raw <- read.csv(data_file,
-                 stringsAsFactors = F,na.strings = ".",header = T,sep=",")
+data.vg.raw <- read.csv(here::here("data", "vgsales.csv"))
 head(data.vg.raw)
 ```
 
@@ -218,7 +214,7 @@ filter(data.vg, Name=="FIFA 15")
 hist(data.vg$NA_Sales )
 ```
 
-![](01-Exploracion_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](03_exploracion_base_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 Calculemos la proporcion de los datos missings Esto nos ayudará a
 decidir la estrategia (borrar vs. llenar)
@@ -399,13 +395,13 @@ summary(data.vg$Global_Sales)
 hist(data.vg$Global_Sales)
 ```
 
-![](01-Exploracion_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](03_exploracion_base_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
 hist(filter(data.vg, Global_Sales < 5)$Global_Sales)
 ```
 
-![](01-Exploracion_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](03_exploracion_base_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
 set.seed(13)
@@ -467,4 +463,4 @@ ggplot( df , aes(x = NA_Sales)) +
   theme_minimal()
 ```
 
-![](01-Exploracion_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](03_exploracion_base_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->

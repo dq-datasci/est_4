@@ -25,10 +25,7 @@ knitr::opts_chunk$set(echo = TRUE)
 # Letura de datos
 
 ```{r datos_fuente}
-data_path <- file.path("C://Users/HP/Projects/kaggle/")
-data_file <- file.path(data_path, "vgsales.csv")
-data.vg.raw <- read.csv(data_file,
-                 stringsAsFactors = F,na.strings = ".",header = T,sep=",")
+data.vg.raw <- read.csv(here::here("data", "vgsales.csv"))
 head(data.vg.raw)
 str(data.vg.raw)
 ```

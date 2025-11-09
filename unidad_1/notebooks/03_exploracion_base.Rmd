@@ -16,17 +16,13 @@ editor_options:
 ```{r librerias}
 #library(mrgsolve)
 library(ggplot2)
-
 library(dplyr)
 ```
 
 # Letura de datos
 
 ```{r}
-data_path <- file.path("C://Users/HP/Projects/est_4/unidad_1/010_practica_simple")
-data_file <- file.path(data_path, "vgsales.csv")
-data.vg.raw <- read.csv(data_file,
-                 stringsAsFactors = F,na.strings = ".",header = T,sep=",")
+data.vg.raw <- read.csv(here::here("data", "vgsales.csv"))
 head(data.vg.raw)
 str(data.vg.raw)
 ```

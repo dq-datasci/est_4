@@ -361,15 +361,11 @@ display: none;
 <h1>Librerias</h1>
 <pre class="r"><code>#library(mrgsolve)
 library(ggplot2)
-
 library(dplyr)</code></pre>
 </div>
 <div id="letura-de-datos" class="section level1">
 <h1>Letura de datos</h1>
-<pre class="r"><code>data_path &lt;- file.path(&quot;C://Users/HP/Projects/est_4/unidad_1/010_practica_simple&quot;)
-data_file &lt;- file.path(data_path, &quot;vgsales.csv&quot;)
-data.vg.raw &lt;- read.csv(data_file,
-                 stringsAsFactors = F,na.strings = &quot;.&quot;,header = T,sep=&quot;,&quot;)
+<pre class="r"><code>data.vg.raw &lt;- read.csv(here::here(&quot;data&quot;, &quot;vgsales.csv&quot;))
 head(data.vg.raw)</code></pre>
 <pre><code>##   Rank                     Name Platform Year        Genre Publisher NA_Sales
 ## 1    1               Wii Sports      Wii 2006       Sports  Nintendo    41.49

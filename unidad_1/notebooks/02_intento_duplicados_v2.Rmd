@@ -23,7 +23,7 @@ library(knitr) # Para crear tablas con formato
 
 #Lectura de datos
 ```{r datos}
-sales_data <- read.csv("vgsales.csv")
+sales_data <- read.csv(here::here("data", "vgsales.csv"))
 head(sales_data)
 summary(sales_data)
 ```
