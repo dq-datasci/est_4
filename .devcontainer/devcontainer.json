@@ -4,8 +4,10 @@
   "image": "rocker/r-ver:4.4.1",
 
   "features": {
-    // Añade Git para control de versiones
-    "ghcr.io/devcontainers/features/git:1": {}
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/apt": {
+      "packages": ["libwebp-dev"]
+    }
   },
 
   "customizations": {
