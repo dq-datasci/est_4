@@ -1,27 +1,25 @@
 {
   "name": "Proyecto de Estadística 4",
-  // Usaremos una imagen pre-construida por Rocker que incluye R 4.4 y RStudio
   "image": "rocker/r-ver:4.4.1",
-
   "features": {
-    "ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/devcontainers/features/apt": {
-      "packages": ["libwebp-dev"]
-    }
+    "ghcr.io/devcontainers/features/git:1": {}
   },
 
   "customizations": {
     "vscode": {
       "extensions": [
-        "REditorSupport.r", // Soporte para R
-        "RDebugger.r-debugger" // Debugger para R
+        "REditorSupport.r",
+        "RDebugger.r-debugger"
       ]
     }
   },
 
-  // Ejecuta esto después de crear el contenedor
+  // 1. Instala librerías del sistema como root (ANTES de todo)
+  "onCreateCommand": "apt-get update && apt-get install -y libwebp-dev",
+
+  // 2. Instala los paquetes de R necesarios
   "postCreateCommand": "R -e \"install.packages(c('renv', 'languageserver'))\"",
-  // Redirige RStudio Server (que viene en la imagen) al puerto 8787
+
   "forwardPorts": [8787],
   "portsAttributes": {
     "8787": {
