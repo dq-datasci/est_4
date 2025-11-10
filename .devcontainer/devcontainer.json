@@ -15,7 +15,7 @@
   },
 
   // 1. Instala librerías del sistema como root (ANTES de todo)
-  "onCreateCommand": "apt-get update && apt-get install -y libwebp-dev",
+  "onCreateCommand": "apt-get update && apt-get install -y libwebp-dev pandoc",
 
   // 2. Instala los paquetes de R necesarios
   "postCreateCommand": "chmod +x .scripts/*.sh && R -e \"install.packages(c('renv', 'languageserver'))\"",
