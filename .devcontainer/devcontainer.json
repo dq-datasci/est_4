@@ -18,7 +18,7 @@
   "onCreateCommand": "apt-get update && apt-get install -y libwebp-dev",
 
   // 2. Instala los paquetes de R necesarios
-  "postCreateCommand": "R -e \"install.packages(c('renv', 'languageserver'))\"",
+  "postCreateCommand": "chmod +x .scripts/*.sh && R -e \"install.packages(c('renv', 'languageserver'))\"",
 
   "forwardPorts": [8787],
   "portsAttributes": {
