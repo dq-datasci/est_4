@@ -73,3 +73,75 @@ mean(sample_A)
 mean(sample_B)
 mean(sample_C)
 ```
+```{r}
+df <- data.frame(
+  estrato = c("A", "A", "A", "B", "B", "C"),
+  x = c(10, 20, 15, 20 , 30, 35)
+)
+df
+```
+```{r}
+# 1. Crear el vector de etiquetas repitiendo "A", "B" y "C" según sus tamaños
+# (N_A = 3000, N_B = 4000, N_C = 5000)
+etiquetas_estrato <- rep(
+  c("A", "B", "C"), 
+  times = c(N_A, N_B, N_C)
+)
+ 
+# 2. Combinar todos los valores de las poblaciones en un solo vector
+valores_completos <- c(poblacion_A, poblacion_B, poblacion_C)
+ 
+# 3. Crear el data frame final
+poblacion_unificada <- data.frame(
+  estrato = etiquetas_estrato,
+  valor = valores_completos
+)
+ 
+# 4. (Opcional) Revisar el resultado
+# Verás 12,000 observaciones
+str(poblacion_unificada)
+ 
+# Ver las primeras filas (Estrato A)
+head(poblacion_unificada)
+ 
+# Ver las últimas filas (Estrato C)
+tail(poblacion_unificada)
+```
+
+```{r}
+# df_A <- data.frame(x)
+
+# Unir los tres data frames usando bind_rows()
+poblacion_unificada_dplyr <- bind_rows(
+  data.frame(estrato = "A", valor = poblacion_A),
+  data.frame(estrato = "B", valor = poblacion_B),
+  data.frame(estrato = "C", valor = poblacion_C)
+)
+ 
+# (Opcional) Revisar el resultado
+str(poblacion_unificada_dplyr)
+head(poblacion_unificada_dplyr)
+tail(poblacion_unificada_dplyr)
+```
+
+```{r}
+summarise(group_by(poblacion_unificada_dplyr, estrato), media_poblacional = mean(valor), tamaño = n())
+
+resumen <- group_by(poblacion_unificada_dplyr, estrato) %>% 
+  summarise(media_poblacional = mean(valor), tamaño = n())
+resumen
+```
+
+Asignacion Optima
+```{r}
+set.seed(456)
+sample_A <- sample(poblacion_A, size = 69, replace = FALSE)
+sample_B <- sample(poblacion_B, size = 150, replace = FALSE)
+sample_C <- sample(poblacion_C, size = 167, replace = FALSE)
+
+```
+
+```{r}
+mean(sample_A)*(3/12) + mean(sample_B)*(4/12) + mean(sample_C)*(5/12)
+
+```
