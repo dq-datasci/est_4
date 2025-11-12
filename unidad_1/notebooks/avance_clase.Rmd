@@ -1,0 +1,75 @@
+---
+title: "Basic Example"
+author: "David Andres Quintela Saavedra"
+date: "2025-11-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+ 
+# Librerias
+
+```{r librerias}
+
+library(ggplot2)
+
+library(dplyr)
+
+```
+ 
+Poblacion
+ 
+```{r}
+
+# Definir los datos de los estratos manualmente
+
+stratum <- c("A", "B", "C")
+
+Nh <- c(3000, 4000, 5000)  # Tamaños de población por estrato
+
+Sh <- c(48, 79, 76)        # Desviaciones estándar por estrato
+ 
+# Combinar en un data frame para mejor manejo
+
+strata_data <- data.frame(stratum, Nh, Sh)
+
+strata_data
+
+```
+
+```{r completar_tabla}
+strata_data <-  strata_data %>% 
+  mutate(peso = Nh/sum(Nh)) %>% 
+  mutate(nh = round(400*peso,0)) %>%
+  mutate(peso_optimo = Nh*Sh) %>%
+  mutate(nh_optimo = round(400*peso_optimo/sum(peso_optimo),0))
+
+strata_data
+
+```
+
+```{r}
+set.seed(123)
+# Parámetros poblacionales
+N_A <- 3000; mu_A <- 50; sigma_A <- 10; poblacion_A <- rnorm(N_A, mean = mu_A, sd = sigma_A)
+N_B <- 4000; mu_B <- 65; sigma_B <- 25; poblacion_B <- rnorm(N_B, mean = mu_B, sd = sigma_B)
+N_C <- 5000; mu_C <- 80; sigma_C <- 50; poblacion_C <- rnorm(N_C, mean = mu_C, sd = sigma_C)
+ 
+N_total <- sum(N_A, N_B, N_C)
+```
+
+```{r}
+set.seed(456)
+sample_A <- sample(poblacion_A, size = 100, replace = FALSE)
+
+sample_B <- sample(poblacion_B, size = 133, replace = FALSE)
+
+sample_C <- sample(poblacion_C, size = 167, replace = FALSE)
+
+
+mean(sample_A)
+mean(sample_B)
+mean(sample_C)
+```
