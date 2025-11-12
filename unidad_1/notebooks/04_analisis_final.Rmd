@@ -1,0 +1,135 @@
+---
+title: "Análisis Estadístico de Ventas de Videojuegos (Reporte Final)"
+author: "David Andres Quintela Saavedra"
+date: "2025-11-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## 1. Cargar Paquetes
+Primero, cargamos los paquetes necesarios para nuestro análisis.
+
+* tidyverse: Es una colección de paquetes (incluyendo `dplyr` para manipulación y `ggplot2` para gráficos) que facilitan la ciencia de datos.
+
+* knitr: Lo usaremos para mostrar las tablas de forma ordenada con `kable()`.
+
+
+```{r librerías}
+library(tidyverse)
+library(knitr)
+```
+
+## 2. Carga y Exploración Inicial de Datos
+El primer paso de cualquier análisis es cargar los datos y entender su estructura.
+
+* Usamos `here::here()` para leer el archivo. Esta es una buena práctica porque construye la ruta al archivo vgsales.csv  basándose en la ubicación del archivo .Rproj, lo que evita que las rutas se rompan si movemos el proyecto.
+
+* Luego, usamos `head()`, `summary()` y `str()` para nuestra primera inspección.
+
+### Carga de datos
+
+```{r carga_datos}
+# Lee los datos desde la carpeta 'data' en la raíz del proyecto
+sales_data <- read.csv(here::here("data", "vgsales.csv"))
+```
+
+### Primeras filas del conjunto de datos
+
+``` {r primeras_filas}
+head(sales_data)
+```
+
+### Resumen Estadístico del Conjunto de Datos
+
+``` {r resumen_estadístico}
+summary(sales_data)
+```
+
+### Estructura del Conjunto de Datos
+
+``` {r estructura_datos}
+str(sales_data)
+```
+
+### Conclusiones de la Exploración Inicial
+Al ver la salida de `summary()` y `str()`, notamos varios puntos clave:
+
+* Tipos de Datos Incorrectos: Year se cargó como texto (chr). Esto se debe a que, como veremos, contiene valores no numéricos. Platform, Genre y Publisher también son chr y serían más útiles como factor.
+
+* Outliers: Global_Sales tiene una media de 0.53 pero un máximo de 82.74. Esto indica que hay valores atípicos muy extremos que podrían sesgar los promedios.
+
+## 3. Limpieza de Datos
+
+### 3.1 Investigación de `chr()` en `Year`
+
+Al ejecutar `summary()` y `str()` en el paso anterior, notamos que la columna `Year` fue cargada como texto (`character`) y no como un número. Esto sugiere que hay valores no numéricos mezclados en esa columna que debemos investigar.
+
+El siguiente paso lógico es preguntar: "¿Qué valores no numéricos hay?" Para hacer eso, usamos el siguiente comando:
+
+``` {r investigacion_chr}
+print( head(unique(sales_data$Year), 100) )
+```
+Ahora que sabemos que el culpable es el texto "N/A", vamos a contarlo para ver qué tan grande es el problema.
+
+```{r investigacion-na}
+# 1. Contamos cuántas filas tienen el TEXTO "N/A"
+conteo_string_na <- sum(sales_data$Year == "N/A", na.rm = TRUE)
+cat("Filas con el TEXTO 'N/A':", conteo_string_na, "\n")
+
+# 2. Contamos cuántas filas tienen el VALOR NA de R (que es diferente)
+conteo_valor_na <- sum(is.na(sales_data$Year))
+cat("Filas con el VALOR NA:", conteo_valor_na, "\n")
+```
+### Conclusión del Diagnóstico
+El análisis confirma que la columna Year contiene 271 filas con el texto `"N/A"`. Estos no son `NA`s estándar de R, por lo que debemos filtrarlos manualmente antes de poder convertir la columna a numérica.
+
+### 3.1.1 Proceso de limpieza y conversión
+Filtraremos las filas con `"N/A"`, convertiremos la columna a número y luego filtraremos cualquier `NA` que se haya generado en el proceso. También filtraremos los juegos lanzados antes de 1990 para centrar el análisis en la era más moderna.
+
+```{r limpieza_conversion_chr}
+# 1. Toma los datos originales
+sales_data_clean <- sales_data %>%
+  # 2. Elimina las filas donde Year es el texto "N/A"
+  filter(Year != "N/A") %>%
+  # 3. Convierte la columna Year a número (esto crea NAs si hay otros textos)
+  mutate(Year = as.numeric(as.character(Year))) %>%
+  # 4. Elimina cualquier fila con NA y filtra por año
+  filter(!is.na(Year), Year >= 1990)
+
+cat(sprintf("Se eliminaron %d filas con datos de año no válidos o antiguos.\n", nrow(sales_data) - nrow(sales_data_clean)))
+cat(sprintf("El conjunto de datos ahora contiene %d registros.\n", nrow(sales_data_clean)))
+cat(sprintf("Y como podemos comprobar el Year ahora esta en: %s", class(sales_data_clean$Year)))
+```
+### 3.2 Conversión de tipos
+
+Aqui vemos de convertir Platform, Genre y Publisher a factor para los futuros análisis.
+
+```{r conversion_tipos}
+sales_data_clean <- sales_data_clean %>%
+  mutate(
+    Platform  = as.factor(Platform),
+    Genre     = as.factor(Genre),
+    Publisher = as.factor(Publisher)
+  )
+```
+## 4. Análisis Descriptivo y Visualizaciones
+
+### 4.1 Verificación de Datos Limpios
+
+Ahora que hemos limpiado y transformado nuestros datos, vamos a hacer una última verificación con `str()` y `summary()` sobre nuestro nuevo dataframe `sales_data_clean`. 
+
+Esto nos permitirá confirmar dos cosas:
+1.  Que los tipos de datos son correctos (ej. `Year` es `num`, `Genre` es `Factor`).
+2.  Que ya no tenemos los `NA`s en `Year`.
+
+```{r verificar-datos-limpios}
+str(sales_data_clean)
+summary(sales_data_clean)
+```
+
+#### Conclusión de la Verificación: 
+¡Éxito! La salida de `str()` ahora muestra `Year` como `num` y `Platform`, `Genre` y `Publisher` como `Factor`. El `summary()` de `Year` ahora muestra estadísticas (Min., Median, Mean) en lugar de "Class :character", confirmando que la limpieza fue exitosa.
+
