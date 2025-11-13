@@ -257,3 +257,80 @@ ggplot(regional_sales, aes(x = reorder(Region, -Total_Sales), y = Total_Sales)) 
        y = "Ventas Totales (en millones)") +
   theme_minimal()
 ```
+
+### Conclusión:
+América del Norte (NA_Sales) es el mercado más grande, casi duplicando al de Europa (EU_Sales). El mercado japonés (JP_Sales) es también muy significativo.
+
+### 5.2 Comparación de Géneros por Región
+**¿Tienen todas las regiones los mismos gustos?**
+
+```{r generos_región}
+# Seleccionamos los 5 géneros más populares
+top_genres <- head(genre_sales$Genre, 5)
+
+# Filtramos por esos géneros y los resumimos por región
+genre_regional_sales <- sales_data_clean %>%
+  filter(Genre %in% top_genres) %>%
+  group_by(Genre) %>%
+  summarise(
+    NA_Sales = sum(NA_Sales),
+    EU_Sales = sum(EU_Sales),
+    JP_Sales = sum(JP_Sales)
+  ) %>%
+  gather(key = "Region", value = "Sales", -Genre)
+
+# Gráfico: Comparación de Géneros Populares por Región
+ggplot(genre_regional_sales, aes(x = Genre, y = Sales, fill = Region)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Comparación de Géneros Populares por Región",
+       x = "Género",
+       y = "Ventas (en millones)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### Conclusión:
+Aquí vemos patrones interesantes. Mientras que `'Action'` y `'Sports'` dominan en Norteamérica y Europa, el mercado japonés (JP_Sales) tiene una preferencia cultural muy marcada por el género `'Role-Playing'`.
+
+## 6. Análisis Estadístico (Prueba de Hipótesis)
+Queremos saber si la diferencia que vimos en las ventas de `'Action'`, `'Sports'` y `'Shooter'` es estadísticamente significativa, o si podría deberse al azar.
+
+Pregunta: **¿Existe una diferencia significativa en las ventas globales medias entre los géneros `'Action'`, `'Sports'` y `'Shooter'`?**
+
+Método: Usaremos un ANOVA (Análisis de Varianza).
+
+Hipótesis Nula (H0): Las medias de ventas globales son iguales para los tres géneros.
+
+Hipótesis Alternativa (H1): Al menos una de las medias es diferente.
+
+```{r prueba_hipótesis}
+# Filtrar los datos para los tres géneros de interés
+anova_data <- sales_data_clean %>%
+  filter(Genre %in% c("Action", "Sports", "Shooter"))
+
+# Realizar la prueba ANOVA
+anova_result <- aov(Global_Sales ~ Genre, data = anova_data)
+
+# Mostrar el resumen de la prueba
+summary(anova_result)
+
+# Gráfico Boxplot para visualizar las distribuciones
+# Usamos scale_y_log10() porque los datos están muy sesgados por valores atípicos
+ggplot(anova_data, aes(x = Genre, y = Global_Sales, fill = Genre)) +
+  geom_boxplot() +
+  scale_y_log10() + 
+  labs(title = "Distribución de Ventas Globales para Géneros Seleccionados",
+       x = "Género",
+       y = "Ventas Globales (escala logarítmica)") +
+  theme_minimal()
+```
+
+### Conclusión del ANOVA
+El resultado del summary(anova_result) muestra un p-value (columna Pr(>F)) de 2.58e-05.
+
+Este valor (0.0000258) es mucho más pequeño que nuestro nivel de significancia estándar (0.05).
+
+Por lo tanto, rechazamos la hipótesis nula (H0).
+
+### Conclusión:
+Existe una diferencia estadísticamente significativa en las ventas globales medias entre, al menos, dos de los géneros `'Action'`, `'Sports'` y `'Shooter'`. El boxplot sugiere que las medianas son diferentes, validando visualmente nuestro resultado.
