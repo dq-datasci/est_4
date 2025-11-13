@@ -1,0 +1,185 @@
+---
+title: "Comparación de Distribuciones Poblacionales y Muestrales"
+subtitle: "Análisis de la variable 'Peso_NA'"
+author: "David Andres Quintela Saavedra"
+date: "2025-11-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# 1. Cargar Paquetes
+Primero, cargamos los paquetes que usaremos para el análisis.
+
+tidyverse: Para la manipulación de datos (dplyr) y gráficos (ggplot2).
+
+knitr: Para mostrar tablas de forma ordenada (kable()).
+
+```{r carga_paquetes}
+library(tidyverse)
+library(knitr)
+```
+
+# 2. Carga y Limpieza de Datos
+Para este análisis, partimos de los mismos datos de ventas de videojuegos. Realizaremos el mismo proceso de limpieza que definimos en el reporte anterior.
+
+## 2.1 Carga de Datos
+
+```{r carga_datos}
+# Lee los datos desde la carpeta 'data' en la raíz del proyecto
+sales_data <- read.csv(here::here("data", "vgsales.csv"))
+```
+
+## 2.2 Limpieza y Conversión
+Aquí realizamos el proceso de limpieza y conversión de tipos que ya investigamos:
+
+Filtramos el texto "N/A" de la columna Year.
+
+Convertimos Year a numérico y filtramos NAs y años < 1990.
+
+Convertimos las variables categóricas a factor.
+
+```{r limpieza_conversion}
+sales_data_clean <- sales_data %>%
+  # Limpieza de 'Year'
+  filter(Year != "N/A") %>%
+  mutate(Year = as.numeric(as.character(Year))) %>%
+  filter(!is.na(Year), Year >= 1990) %>%
+  
+  # Conversión de Tipos
+  mutate(
+    Platform  = as.factor(Platform),
+    Genre     = as.factor(Genre),
+    Publisher = as.factor(Publisher)
+  )
+
+cat(sprintf("El conjunto de datos limpios contiene %d registros.\n", nrow(sales_data_clean)))
+```
+
+# 3. Definición de la Población y Variable de Interés
+Aquí comienzan los pasos específicos para esta tarea.
+
+## 3.1 Creación de la Población
+Las instrucciones nos piden definir nuestra "población de interés" como todos los juegos con ventas globales (Global_Sales) menores a 2 millones.
+
+```{r creacion_poblacion}
+poblacion <- sales_data_clean %>%
+  filter(Global_Sales < 2)
+
+cat(sprintf("Nuestra población de interés (juegos < 2M en ventas) tiene %d registros.", nrow(poblacion)))
+```
+
+## 3.2 Creación de la Variable Peso_NA
+Ahora, creamos la nueva variable Peso_NA, que mide el porcentaje de las ventas de Norteamérica (NA_Sales) sobre el total (Global_Sales).
+
+Importante: Filtraremos cualquier fila donde Global_Sales sea 0 para evitar errores de división por cero (NaN).
+
+```{r variable_peso_na}
+poblacion <- poblacion %>%
+  filter(Global_Sales > 0) %>% # Prevenir división por cero
+  mutate(Peso_NA = (NA_Sales / Global_Sales))
+
+# Verificamos los resultados
+cat("Resumen estadístico de la nueva variable 'Peso_NA':\n")
+summary(poblacion$Peso_NA)
+```
+
+## 3.3 Distribución de la Población
+Veamos cómo se distribuye nuestra nueva variable Peso_NA en toda la población.
+
+```{r distribucion_poblacion}
+ggplot(poblacion, aes(x = Peso_NA)) +
+  geom_histogram(aes(y = ..density..), bins = 50, fill = "blue", alpha = 0.5) +
+  geom_density(color = "blue", linewidth = 1) +
+  labs(title = "Distribución de Peso_NA en la Población (<2M Ventas)",
+       x = "Peso_NA (NA_Sales / Global_Sales)",
+       y = "Densidad") +
+  theme_minimal()
+```
+
+### Observación de la Población:
+La distribución está fuertemente sesgada. Vemos dos picos claros:
+
+Un pico muy grande en 0, que representa juegos que no tuvieron ventas en Norteamérica.
+
+Un pico más pequeño cerca de 1, que representa juegos cuyas ventas fueron casi exclusivamente en Norteamérica.
+
+Una gran masa de juegos se concentra entre 0.25 y 0.75.
+
+# 4. Muestreo y Comparación
+Las instrucciones nos piden tomar dos muestras aleatorias de tamaño 500 para compararlas con la población.
+
+## 4.1 Toma de Muestras
+Usamos set.seed() para asegurar que nuestro análisis sea reproducible (que siempre obtengamos las mismas muestras).
+
+```{r toma_muestras}
+# Fijamos una semilla para la primera muestra
+set.seed(123)
+muestra_1 <- poblacion %>% 
+  sample_n(500)
+
+# Fijamos una semilla DIFERENTE para la segunda muestra
+set.seed(456)
+muestra_2 <- poblacion %>%
+  sample_n(500)
+
+cat(sprintf("Muestra 1: %d registros\n", nrow(muestra_1)))
+cat(sprintf("Muestra 2: %d registros\n", nrow(muestra_2)))
+```
+
+## 4.2 Comparación de Estadísticas Básicas
+Comparemos las estadísticas descriptivas (media, mediana, etc.) de nuestras dos muestras con las de la población completa.
+
+```{r estadisticas_basicas}
+# 1. Obtener estadísticas (esto está bien)
+stats_poblacion <- summary(poblacion$Peso_NA)
+stats_muestra_1 <- summary(muestra_1$Peso_NA)
+stats_muestra_2 <- summary(muestra_2$Peso_NA)
+
+# 2. Combinar los sumarios como FILAS usando rbind()
+tabla_comparativa <- rbind(
+  Poblacion = stats_poblacion,
+  Muestra_1 = stats_muestra_1,
+  Muestra_2 = stats_muestra_2
+)
+
+# 3. Mostrar la tabla con kable()
+kable(tabla_comparativa, digits = 4)
+```
+
+### Observación de Estadísticas:
+Como podemos ver en la tabla, las estadísticas de ambas muestras son extremadamente similares a las de la población. La Mean (Media) y Median (Mediana) están muy cercanas, lo que sugiere que nuestras muestras son buenas representantes de la población general.
+
+## 4.3 Comparación Gráfica de Distribuciones
+La mejor forma de comparar las distribuciones es graficarlas juntas. Usaremos gráficos de densidad.
+
+```{r graficas_distribuciones}
+# 1. Creamos un solo dataframe para graficar
+datos_comparativos <- bind_rows(
+  poblacion %>% select(Peso_NA) %>% mutate(Grupo = "Población"),
+  muestra_1 %>% select(Peso_NA) %>% mutate(Grupo = "Muestra 1 (n=500)"),
+  muestra_2 %>% select(Peso_NA) %>% mutate(Grupo = "Muestra 2 (n=500)")
+)
+
+# 2. Graficamos las densidades
+ggplot(datos_comparativos, aes(x = Peso_NA, color = Grupo)) +
+  geom_density(linewidth = 1.1) +
+  labs(title = "Comparación de Distribuciones: Población vs. Muestras",
+       x = "Peso_NA (NA_Sales / Global_Sales)",
+       y = "Densidad") +
+  theme_minimal() +
+  scale_color_manual(values = c("Población" = "blue", 
+                                "Muestra 1 (n=500)" = "red", 
+                                "Muestra 2 (n=500)" = "green"))
+```
+
+# 5. Conclusiones y Observaciones
+Representatividad: Las dos muestras aleatorias (Muestra 1 y Muestra 2) han demostrado ser excelentes representantes de la población de interés (Global_Sales < 2M).
+
+Estadísticas: Las estadísticas descriptivas clave (como la media y la mediana) de las muestras están muy alineadas con las de la población.
+
+Distribución: El gráfico de densidad muestra que las muestras capturan perfectamente la forma de la distribución poblacional, incluyendo los picos en 0 y 1 y el sesgo general.
+
+Conclusión General: Este ejercicio demuestra un principio fundamental del muestreo: si se toma aleatoriamente, una muestra de tamaño 500 (aun siendo mucho más pequeña que la población de ~16,000 registros) es capaz de replicar las características y la distribución de la población de la cual fue extraída.
