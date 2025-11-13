@@ -128,8 +128,132 @@ Esto nos permitirá confirmar dos cosas:
 ```{r verificar-datos-limpios}
 str(sales_data_clean)
 summary(sales_data_clean)
+
 ```
 
 #### Conclusión de la Verificación: 
 ¡Éxito! La salida de `str()` ahora muestra `Year` como `num` y `Platform`, `Genre` y `Publisher` como `Factor`. El `summary()` de `Year` ahora muestra estadísticas (Min., Median, Mean) en lugar de "Class :character", confirmando que la limpieza fue exitosa.
 
+### 4.2 Análisis de Género
+Con los datos listos, podemos empezar a hacernos preguntas. La primera es: **¿Cuáles son los géneros de videojuegos más vendidos?**
+
+```{r análisis_género}
+# Agrupamos por Género, sumamos las ventas globales y ordenamos
+genre_sales <- sales_data_clean %>%
+  group_by(Genre) %>%
+  summarise(Total_Global_Sales = sum(Global_Sales)) %>%
+  arrange(desc(Total_Global_Sales))
+
+# Usamos kable() para una tabla bien formateada
+kable(genre_sales)
+
+# Gráfico: Top 10 Géneros por Ventas Globales
+ggplot(head(genre_sales, 10), aes(x = reorder(Genre, Total_Global_Sales), y = Total_Global_Sales)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() + # Voltear los ejes hace que los nombres largos sean legibles
+  labs(title = "Top 10 Géneros por Ventas Globales (desde 1990)",
+       x = "Género",
+       y = "Ventas Globales (en millones)") +
+  theme_minimal()
+```
+
+### Conclusión:
+Se observa que 'Action' y 'Sports' son, por mucho, los géneros más vendidos en la historia moderna de los videojuegos.
+
+
+### 4.3 Análisis de Editores (Publishers)
+
+A continuación, investigamos: **¿Qué compañías dominan el mercado?**
+
+De forma similar a como hicimos con `Year`, primero debemos investigar la columna `Publisher`. En nuestra exploración inicial, vimos que era `chr` y en el paso `3.2` la convertimos a `factor`. Ahora, veamos cuáles son los editores más comunes para detectar cualquier dato "sucio" o faltante.
+
+```{r investigacion_publisher}
+# summary() en un factor nos muestra los conteos de los niveles más frecuentes.
+# Usamos maxsum=50 para limitar la salida y no inundar el reporte
+# con los 500+ editores.
+publisher_summary <- summary(sales_data_clean$Publisher, maxsum = 50)
+kable(publisher_summary)
+
+# Contemos específicamente cuántos "Unknown" hay
+conteo_unknown <- sum(sales_data_clean$Publisher == "Unknown")
+cat(sprintf("Número total de registros con Publisher 'Unknown': %d\n", conteo_unknown))
+```
+
+### Conclusión de la Investigación:
+Efectivamente, el resumen muestra que "Unknown" es una de las categorías más frecuentes (con 99 registros en nuestros datos limpios). Al igual que "N/A" era un placeholder para un año faltante, "Unknown" lo es para un editor faltante.
+
+### Filtramos y sumamos ventas
+Para que nuestro análisis de "Top Editores" sea significativo y compare compañías reales, filtraremos estos 99 registros "Unknown" antes de sumarizar.
+
+```{r filtrado_summarise}
+# Agrupamos por Editor, sumamos ventas y filtramos "Unknown"
+publisher_sales <- sales_data_clean %>%
+  group_by(Publisher) %>%
+  summarise(Total_Global_Sales = sum(Global_Sales)) %>%
+  filter(Publisher != "Unknown") %>% 
+  arrange(desc(Total_Global_Sales))
+
+kable(head(publisher_sales, 10))
+
+# Gráfico: Top 10 Editores por Ventas Globales
+ggplot(head(publisher_sales, 10), aes(x = reorder(Publisher, Total_Global_Sales), y = Total_Global_Sales)) +
+  geom_bar(stat = "identity", fill = "darkgreen") +
+  coord_flip() +
+  labs(title = "Top 10 Editores por Ventas Globales (desde 1990)",
+       x = "Editor",
+       y = "Ventas Globales (en millones)") +
+  theme_minimal()
+```
+
+### Conclusión:
+Tras filtrar los datos desconocidos, vemos que Nintendo, Electronic Arts y Activision son los tres gigantes indiscutibles, con Nintendo liderando significativamente.
+
+### 4.4 Análisis Temporal
+Veamos: **¿Cómo ha evolucionado el número de lanzamientos de juegos a lo largo del tiempo?**
+
+```{r análisis_temporal}
+# Contamos el número de juegos (filas) por año
+games_per_year <- sales_data_clean %>%
+  group_by(Year) %>%
+  summarise(Count = n())
+
+# Gráfico: Lanzamientos de Juegos por Año
+# (Usamos linewidth=1 en lugar de size=1 para evitar advertencias)
+ggplot(games_per_year, aes(x = Year, y = Count)) +
+  geom_line(color = "red", linewidth = 1) +
+  geom_point(color = "red") +
+  labs(title = "Número de Juegos Lanzados por Año",
+       x = "Año",
+       y = "Cantidad de Juegos") +
+  theme_minimal()
+```
+
+### Conclusión: 
+El gráfico de líneas muestra un "boom" claro en la industria, con un crecimiento masivo en lanzamientos que llega a su pico alrededor de 2008-2009, seguido de una contracción.
+
+## 5. Análisis Comparativo
+
+### 5.1 Comparación de Ventas por Región
+**¿Qué región del mundo compra más videojuegos?**
+
+```{r ventas_región}
+# Sumamos el total de ventas para cada región
+regional_sales <- sales_data_clean %>%
+  summarise(
+    NA_Sales = sum(NA_Sales),
+    EU_Sales = sum(EU_Sales),
+    JP_Sales = sum(JP_Sales),
+    Other_Sales = sum(Other_Sales)
+  ) %>%
+  gather(key = "Region", value = "Total_Sales") # 'gather' pone los datos en formato largo para ggplot
+
+kable(regional_sales)
+
+# Gráfico: Comparación de Ventas Totales por Región
+ggplot(regional_sales, aes(x = reorder(Region, -Total_Sales), y = Total_Sales)) +
+  geom_bar(stat = "identity", aes(fill = Region)) +
+  labs(title = "Ventas Totales por Región (desde 1990)",
+       x = "Región",
+       y = "Ventas Totales (en millones)") +
+  theme_minimal()
+```
