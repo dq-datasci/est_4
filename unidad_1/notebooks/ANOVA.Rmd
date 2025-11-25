@@ -1,0 +1,57 @@
+---
+title: "ANOVA"
+author: "David Andres Quintela Saavedra"
+date: "2025-11-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r librerias}
+library(tidyverse)
+library(knitr)
+
+```
+
+
+```{r dataframe}
+# Crear el dataframe
+datos <- data.frame(
+  Proveedor = factor(rep(1:3, each = 10)),
+  valor = c(23, 28, 21, 27, 95, 41, 37, 30, 32, 36,   # Proveedor 1
+            35, 36, 29, 40, 43, 49, 51, 28, 50, 52,   # Proveedor 2
+            50, 43, 36, 34, 45, 52, 52, 43, 44, 34)   # Proveedor 3
+)
+```
+
+```{r dataframe_agrupado}
+
+df <- group_by(datos, Proveedor)
+
+resumen <- df %>% summarise(
+          Promedio = mean(valor),
+          Desviacion_estandar = sd(valor),
+          n = n()
+          )
+resumen
+
+```
+
+```{r grafico_boxplot}
+# Grafico de cajas para visualizar las diferencias
+boxplot(valor ~ Proveedor, data = datos,
+        main = "Comparación de proveedores",
+        xlab = "Proveedor", ylab = "Valor")
+
+
+```
+
+```{r anova}
+# Realizar el análisis de varianza (ANOVA)
+modelo_anova <- aov(valor ~ Proveedor, data = datos)
+
+summary(modelo_anova)
+
+```
