@@ -1,0 +1,74 @@
+---
+title: "Basic Example"
+author: "Ruben Cabrera"
+date: "2025-11-20"
+output: 
+  github_document: default
+  html_document: default
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding, output_format = "all") })
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# Librerias
+```{r librerias}
+library(dplyr)
+library(ggplot2)
+```
+```{r}
+# Crear el data frame
+datos <- data.frame(
+  Proveedor = factor(rep(1:3, each = 10)),
+  Valor = c(23, 28, 21, 27, 95, 41, 37, 30, 32, 36,  # Proveedor 1
+            35, 36, 29, 40, 43, 49, 51, 28, 50, 52,  # Proveedor 2
+            50, 43, 36, 34, 45, 52, 52, 43, 44, 34)  # Proveedor 3
+)
+```
+
+
+
+```{r}
+# Ver las primeras filas del data frame
+head(datos)
+
+```
+```{r}
+
+df <- group_by(datos,Proveedor)
+
+resumen <- df %>% summarise(     
+          Promedio = mean(Valor),
+          Desviacion_estandar = sd(Valor),
+          n = n()
+          )
+resumen
+```
+
+```{r}
+# Gráfico de cajas para visualizar las diferencias
+boxplot(Valor ~ Proveedor, data = datos, 
+        main = "Comparación de proveedores",
+        xlab = "Proveedor", ylab = "Valor")
+
+```
+
+```{r}
+
+# Realizar el análisis de varianza (ANOVA)
+modelo_anova <- aov(Valor ~ Proveedor, data = datos)
+
+summary(modelo_anova)
+```
+
+
+
+```{r}
+# Opcional: pruebas post-hoc (Tukey HSD) si el ANOVA es significativo
+if(summary(modelo_anova)[[1]]$'Pr(>F)'[1] < 0.05) {
+  tukey_result <- TukeyHSD(modelo_anova)
+  print(tukey_result)
+}
+```
+
