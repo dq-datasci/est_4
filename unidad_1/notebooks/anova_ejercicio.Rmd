@@ -1,0 +1,81 @@
+---
+title: "anova_ejercicio"
+author: "David Andres Quintela Saavedra"
+date: "2025-11-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r librerias, include=FALSE}
+library(tidyverse)
+library(knitr)
+
+```
+
+```{r}
+# Crear el data frame
+datos <- data.frame(
+  Tipo_desayuno = factor(rep(c("Sin desayuno", "Desayuno ligero", "Desayuno completo"), 
+                            each = 5),
+                        levels = c("Sin desayuno", "Desayuno ligero", "Desayuno completo")),
+  Puntuacion = c(8, 7, 9, 13, 10,    # Sin desayuno
+                 14, 16, 12, 17, 11, # Desayuno ligero
+                 10, 12, 16, 15, 12) # Desayuno completo
+)
+```
+
+```{r primeras_filas}
+# Ver las primeras filas del data frame
+kable(head(datos))
+```
+
+```{r dataframe_agrupado}
+resumen <- datos %>% 
+  group_by(Tipo_desayuno) %>% 
+  summarise(       
+          Promedio = mean(Puntuacion),
+          Desviacion_estandar = sd(Puntuacion),
+          n = n()
+          )
+
+# Usamos kable para que se vea bonito en el HTML final
+kable(resumen, caption = "Estadísticas descriptivas por tipo de desayuno")
+
+```
+
+```{r grafico_boxplot}
+# Gráfico de cajas para visualizar las diferencias
+boxplot(Puntuacion ~ Tipo_desayuno, data = datos, 
+        main = "Influencia del Desayuno en el Rendimiento",
+        xlab = "Tipo de Desayuno", ylab = "Puntuación",
+        col = c("#ffcccb", "#add8e6", "#90ee90"))
+
+```
+
+```{r anova}
+
+# Realizar el análisis de varianza (ANOVA)
+# Formula: Variable Numérica (Dependiente) ~ Factor (Independiente)
+modelo_anova <- aov(Puntuacion ~ Tipo_desayuno, data = datos)
+
+summary(modelo_anova)
+```
+
+```{r post_hoc}
+# Opcional: pruebas post-hoc (Tukey HSD) si el ANOVA es significativo
+# Verificamos si el p-valor (Pr(>F)) es menor a 0.05
+if(summary(modelo_anova)[[1]]$'Pr(>F)'[1] < 0.05) {
+  tukey_result <- TukeyHSD(modelo_anova)
+  print(tukey_result)
+} else {
+  print("El ANOVA no fue significativo, no se requieren pruebas post-hoc.")
+}
+
+```
+
+## Conclusión
+
+"El análisis de varianza (ANOVA) mostró que el tipo de desayuno tiene un **efecto significativo** en el rendimiento académico **(F = 4.93; gl = 2, 12; p = 0.027)**, trabajando con un **nivel de confianza del 95% ($\alpha$ = 0.05)**.Específicamente, los estudiantes con **desayuno ligero** obtuvieron calificaciones **significativamente más altas** (M=14.0) que aquellos que no desayunaron (M=9.4). Aunque el desayuno completo también mostró mejores promedios, la diferencia estadística más fuerte se encuentra entre desayunar ligero y no desayunar.
