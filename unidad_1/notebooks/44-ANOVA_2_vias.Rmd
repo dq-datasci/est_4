@@ -1,0 +1,155 @@
+---
+title: "Basic Example"
+author: "Ruben Cabrera"
+date: "2025-11-20"
+output: 
+  github_document: default
+  html_document: default
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding, output_format = "all") })
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# Librerias
+```{r librerias}
+library(ggplot2)
+library(dplyr)
+```
+```{r}
+# Crear el data frame
+datos <- read.csv(here::here("data", "encuesta01.csv"))
+# Ver el data frame
+print(datos)
+```
+```{r}
+mi_anova <- aov(nota ~ es_madre,data = datos)
+summary(mi_anova)
+```
+```{r}
+unique(datos$es_madre)
+```
+
+```{r}
+# Ver las primeras filas del data frame
+head(datos)
+mean(datos$nota)
+
+```
+```{r}
+df <- group_by(datos,es_madre)
+```
+
+```{r}
+summarise(df,     
+          Promedio = mean(nota),
+          Desviacion_estandar = sd(nota),
+          n = n()
+)
+```
+```{r}
+df$es_madre <- factor(df$es_madre,labels = c("Primaria","Secundaria","Tecnico","Universitario","Post-grado Universitario"))
+
+```
+
+
+```{r}
+# Gráfico de cajas para visualizar las diferencias
+boxplot(nota ~ es_madre , data = df, 
+        main = "Comparación",
+        xlab = "Escolaridad Madre", ylab = "Nota")
+
+```
+```{r}
+ggplot(df, aes(x = es_madre, y = nota, fill = es_madre)) +
+  geom_boxplot(position = position_dodge(0.8), alpha = 0.7) +
+  labs(title = "Comparación de Valores por Escolaridad de la Madre",
+       x = "Escolaridad",
+       y = "Nota",
+       fill = "Escolaridad")+
+  coord_flip()  # Esta línea voltea el gráfico
+   # +  theme_minimal() 
+```
+```{r}
+ggplot(df, aes(x = nota, y = es_madre, fill = es_madre)) +
+  geom_boxplot(position = position_dodge(0.8), alpha = 0.7) +
+  labs(title = "Comparación de Valores por Escolaridad de la Madre",
+       x = "Nota",
+       y = "Escolaridad Madre",
+       fill = "Escolaridad")
+   # +  theme_minimal() 
+```
+```{r}
+hist(df$uso_horas)
+```
+```{r}
+ggplot(df, aes(x = cuartil_nota)) +
+  geom_bar(fill = "steelblue", alpha = 0.7) +
+  labs(title = "Distribución por Cuartiles de Nota",
+       x = "Cuartil",
+       y = "Frecuencia") +
+  theme_minimal()
+```
+```{r}
+# Calcular los cuartiles
+cuartiles <- quantile(df$nota, probs = c(0, 0.25, 0.5, 0.75, 1))
+
+# Crear etiquetas con los rangos
+etiquetas <- paste0("Q", 1:4, " [", 
+                   round(cuartiles[1:4], 2), "-", 
+                   round(cuartiles[2:5], 2), "]")
+
+df$cuartil_rango <- cut(df$nota,
+                        breaks = cuartiles,
+                        labels = etiquetas,
+                        include.lowest = TRUE)
+
+
+```
+
+```{r}
+# Crear variable de cuartiles
+df$cuartil_uso <- cut(df$uso_horas,
+                       breaks = quantile(df$uso_horas, probs = c(0, 0.25, 0.5, 0.75, 1)),
+                       labels = c("Q1", "Q2", "Q3", "Q4"),
+                       include.lowest = TRUE)
+
+
+df$cuartil_uso
+```
+
+```{r}
+# Calcular los cuartiles
+cuartiles <- quantile(df$uso_horas, probs = c(0, 0.25, 0.5, 0.75, 1))
+
+# Crear etiquetas con los rangos
+etiquetas <- paste0("Q", 1:4, " [", 
+                   round(cuartiles[1:4], 2), "-", 
+                   round(cuartiles[2:5], 2), "]")
+
+df$cuartil_uso <- cut(df$uso_horas,
+                        breaks = cuartiles,
+                        labels = etiquetas,
+                        include.lowest = TRUE)
+
+df
+```
+
+
+```{r}
+# Calcular ANOVA de dos vías con interacción
+anova_resultado <- aov(Resistencia ~ Grosor * Templado, data = datos)
+summary(anova_resultado)
+```
+
+
+
+```{r}
+# Opcional: pruebas post-hoc (Tukey HSD) si el ANOVA es significativo
+if(summary(anova_resultado)[[1]]$'Pr(>F)'[1] < 0.05) {
+  tukey_result <- TukeyHSD(anova_resultado)
+  print(tukey_result)
+}
+```
+
