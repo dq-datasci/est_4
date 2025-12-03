@@ -276,6 +276,28 @@
       "Maintainer": "Hadley Wickham <hadley@posit.co>",
       "Repository": "CRAN"
     },
+    "SDaA": {
+      "Package": "SDaA",
+      "Version": "0.1-5",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Sampling: Design and Analysis",
+      "Date": "2022-04-11",
+      "Author": "Tobias Verbeke",
+      "Maintainer": "Tobias Verbeke <tobias.verbeke@openanalytics.eu>",
+      "Description": "Functions and Datasets from Lohr, S. (1999), Sampling: Design and Analysis, Duxbury.",
+      "Suggests": [
+        "survey",
+        "ggplot2 (>= 0.8.2)"
+      ],
+      "License": "GPL-3",
+      "LazyData": "Yes",
+      "Collate": "'agpop.R' 'agsrs.R' 'agstrat.R' 'anthrop.R' 'anthsrs.R' 'anthuneq.R' 'audit.R' 'books.R' 'certify.R' 'coots.R' 'counties.R' 'divorce.R' 'golfsrs.R' 'htpop.R' 'htsrs.R' 'htstrat.R' 'journal.R' 'lahiri.design.R' 'measles.R' 'ncvs.R' 'nybight.R' 'otters.R' 'ozone.R' 'samples.R' 'seals.R' 'selectrs.R' 'statepop.R' 'statepps.R' 'syc.R' 'teachers.R' 'teachmi.R' 'teachnr.R' 'winter.R'",
+      "Encoding": "UTF-8",
+      "Repository": "CRAN",
+      "RoxygenNote": "7.1.2",
+      "NeedsCompilation": "no"
+    },
     "askpass": {
       "Package": "askpass",
       "Version": "1.2.1",
@@ -1664,6 +1686,37 @@
       "Author": "Jennifer Bryan [cre, aut] (ORCID: <https://orcid.org/0000-0002-6983-2759>), Posit Software, PBC [cph, fnd]",
       "Maintainer": "Jennifer Bryan <jenny@posit.co>",
       "Repository": "CRAN"
+    },
+    "gridExtra": {
+      "Package": "gridExtra",
+      "Version": "2.3",
+      "Source": "Repository",
+      "Authors@R": "c(person(\"Baptiste\", \"Auguie\", email = \"baptiste.auguie@gmail.com\", role = c(\"aut\", \"cre\")), person(\"Anton\", \"Antonov\", email = \"tonytonov@gmail.com\", role = c(\"ctb\")))",
+      "License": "GPL (>= 2)",
+      "Title": "Miscellaneous Functions for \"Grid\" Graphics",
+      "Type": "Package",
+      "Description": "Provides a number of user-level functions to work with \"grid\" graphics, notably to arrange multiple grid-based plots on a page, and draw tables.",
+      "VignetteBuilder": "knitr",
+      "Imports": [
+        "gtable",
+        "grid",
+        "grDevices",
+        "graphics",
+        "utils"
+      ],
+      "Suggests": [
+        "ggplot2",
+        "egg",
+        "lattice",
+        "knitr",
+        "testthat"
+      ],
+      "RoxygenNote": "6.0.1",
+      "NeedsCompilation": "no",
+      "Author": "Baptiste Auguie [aut, cre], Anton Antonov [ctb]",
+      "Maintainer": "Baptiste Auguie <baptiste.auguie@gmail.com>",
+      "Repository": "CRAN",
+      "Encoding": "UTF-8"
     },
     "gtable": {
       "Package": "gtable",
