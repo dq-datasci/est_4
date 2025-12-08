@@ -1,0 +1,96 @@
+---
+title: "Conglomerados 2 niveles"
+author: "Ruben Cabrera"
+date: "2025-12-03"
+output: 
+  github_document: default
+  html_document: default
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding, output_format = "all") })
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# Librerias
+```{r librerias}
+library(ggplot2)
+library(dplyr)
+#library(tidyverse)
+library(gridExtra)
+#install.packages("SDaA")
+library(SDaA)
+```
+```{r}
+data(coots)
+head(coots)
+```
+```{r}
+summary(coots)
+```
+```{r}
+length(unique(coots$clutch))
+```
+```{r}
+coots %>% group_by(clutch) %>% summarise(cant=n())
+```
+```{r}
+# Crear resumen por nidada
+resumen_nidadas <- coots %>%
+  group_by(clutch) %>%
+  summarise(
+    media = mean(volume),
+    sd = sd(volume),
+    min = min(volume),
+    max = max(volume),
+    rango = diff(range(volume)),
+    cant = n()
+  ) %>%
+  arrange(media) %>%
+  mutate(orden = row_number())
+
+resumen_nidadas
+
+```
+```{r}
+
+# Versión 1: Puntos individuales
+fig_a <- ggplot(coots, aes(x = as.factor(clutch), y = volume)) +
+  geom_point(alpha = 0.6, size = 1.5) +
+  geom_line(aes(group = clutch), alpha = 0.3) +
+  stat_summary(fun = mean, geom = "point", 
+               color = "red", size = 2, shape = 18) +
+  labs(
+    title = "Gráfica A de datos de volúmenes de huevo",
+    subtitle = "Puntos: huevos individuales | Diamantes rojos: media por nidada",
+    x = "Número de nidada",
+    y = "Volumen del huevo"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()
+  )
+
+fig_a
+
+```
+
+```{r}
+fig_b <- ggplot(resumen_nidadas, aes(x = clutch, y = media)) +
+  geom_point(alpha = 0.7, size = 1.5, color = "darkblue") +
+  geom_hline(yintercept = mean(resumen_nidadas$media), 
+             linetype = "dashed", color = "red") +
+  labs(
+    title = "FIGURA B (versión): Medias por nidada",
+    x = "Número de nidada",
+    y = "Volumen medio del huevo"
+  ) +
+  theme_minimal()
+
+fig_b
+
+
+```

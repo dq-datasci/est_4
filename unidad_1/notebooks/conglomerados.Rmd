@@ -26,6 +26,22 @@ data(coots)
 head(coots)
 ```
 
+```{r resumen_datos}
+summary(coots)
+```
 
+```{r}
+coots_agrupados <- coots %>%
+  group_by(clutch)
+coots_agrupados
+```
 
- 
+```{r}
+coots %>% group_by(clutch) %>% summarise(cant=n())
+```
+
+```{r}
+# estimar el valor promedio del volumen de los huevos
+#investigar el error standar de esa estimacion
+
+```

@@ -1,0 +1,43 @@
+Resumen: Análisis de Regresión Múltiple: El Problema de Estimación
+
+Basado en el Capítulo 7 de Gujarati
+
+1. Introducción y Necesidad del Modelo
+El capítulo introduce el análisis de regresión múltiple, superando el modelo simple de dos variables. La teoría económica rara vez explica un fenómeno (variable dependiente $Y$) con una sola variable explicativa. Por ejemplo, el consumo no depende solo del ingreso, sino también de la riqueza; la demanda depende del precio propio, precios competidores y el ingreso.
+El modelo más simple de regresión múltiple es el de tres variables:
+
+
+$$Y_i = \beta_1 + \beta_2X_{2i} + \beta_3X_{3i} + u_i$$
+
+2. Interpretación de los Coeficientes de Regresión Parcial
+Los coeficientes $\beta_2$ y $\beta_3$ se denominan coeficientes de regresión parcial.
+
+Significado: $\beta_2$ mide el cambio en el valor promedio de $Y$ por unidad de cambio en $X_2$, manteniendo constante el valor de $X_3$ (ceteris paribus).
+
+Esto permite aislar el efecto "neto" o "directo" de una variable explicativa sobre la dependiente, eliminando la influencia lineal de las otras variables del modelo.
+
+3. Supuestos del Modelo Clásico
+Se mantienen los supuestos del Modelo Clásico de Regresión Lineal (media cero de errores, homoscedasticidad, no autocorrelación), pero se añade uno crucial para regresión múltiple:
+
+No Colinealidad Exacta: No debe existir una relación lineal exacta entre las variables explicativas ($X_2$ y $X_3$). Si hay colinealidad perfecta, no se pueden estimar los coeficientes por separado.
+
+4. Estimación por Mínimos Cuadrados Ordinarios (MCO)
+Al igual que en el modelo simple, se busca minimizar la suma de los residuos al cuadrado ($\sum \hat{u}_i^2$). Los estimadores MCO resultantes son MELI (Mejores Estimadores Lineales Insesgados), cumpliendo con el Teorema de Gauss-Markov.
+
+5. Bondad de Ajuste: $R^2$ vs. $R^2$ Ajustado
+
+$R^2$ (Coeficiente de determinación múltiple): Mide la proporción de la variación en $Y$ explicada conjuntamente por todas las variables $X$.
+
+El problema del $R^2$: Es una función no decreciente del número de regresoras. Si se agregan más variables al modelo, el $R^2$ aumentará (o quedará igual), aunque las variables sean irrelevantes.
+
+$R^2$ Ajustado ($\bar{R}^2$): Corrige el problema anterior ponderando por los grados de libertad ($n-k$). Se utiliza para comparar modelos con el mismo $Y$ pero diferente número de variables $X$. Si se añaden variables inútiles, el $\bar{R}^2$ disminuirá.
+
+6. Extensiones y Formas Funcionales
+El capítulo explora cómo el modelo lineal general puede adaptarse a relaciones no lineales en las variables (pero lineales en parámetros):
+
+Función de Producción Cobb-Douglas: Mediante logaritmos ($\ln Y = \ln \beta_1 + \beta_2 \ln X_2 + \beta_3 \ln X_3$), los coeficientes se interpretan como elasticidades (ej. elasticidad del producto respecto al trabajo o capital).
+
+Modelos Polinomiales: Útiles para funciones de costos (curvas en forma de U). Se introducen potencias de la misma variable ($X, X^2, X^3$) como regresores distintos.
+
+7. Sesgo de Especificación
+Si el modelo verdadero requiere tres variables ($Y, X_2, X_3$) y se estima incorrectamente omitiendo una ($Y$ sobre $X_2$ solamente), los estimadores resultantes estarán sesgados. Esto demuestra la importancia de especificar correctamente el modelo basándose en la teoría económica.
