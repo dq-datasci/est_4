@@ -12,7 +12,6 @@ output:
   github_document: default
   pdf_document:
     toc: true
-  knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, output_format = "all") })
 ---
 
 ```{r setup, include=FALSE}
@@ -54,76 +53,182 @@ datos_telefonia <- data.frame(
   Costo = costos
 )
 
-# Mostramos la tabla para verificar que coincida con la imagen
-kable(datos_telefonia, caption = "Datos de Costos Mensuales")
+# Mostramos la tabla en formato lista (formato "tidy")
+kable(head(datos_telefonia), caption = "Primeras filas de los datos crudos")
 ```
 
-## 3. Análisis Exploratorio
+## 3. Análisis Descriptivo
 
-Antes de realizar el ANOVA, visualicemos los datos para entender el comportamiento de los costos por compañía y por nivel de uso.
-```{r EDA}
+### 3.1 Verificación de Totales (Replicando la tabla original)
+
+Para asegurarnos de que nuestros datos coinciden perfectamente con los del ejercicio, generamos una tabla cruzada que muestra la suma de costos por Compañía y Nivel de Uso, incluyendo los totales marginales ($B_i$, $T_j$ y $G$)
+```{r tabla_original}
+# Creamos una tabla cruzada sumando los costos
+tabla_cruzada <- xtabs(Costo ~ Nivel_Uso + Compania, data = datos_telefonia)
+
+# Agregamos los márgenes (totales por fila y columna)
+tabla_con_totales <- addmargins(tabla_cruzada)
+
+# Mostramos la tabla
+print(tabla_con_totales)
+```
+Nota: Podemos verificar que el Gran Total ($G$) es 1627, y los totales por columna ($A=403, B=426$, etc.) coinciden con la imagen del problema.
+
+### 3.2 Estadísticas Resumen (Promedios y Desviación)
+
+Calculamos las estadísticas resumen (media, desviación estándar) para entender la tendencia central y la dispersión de nuestros grupos.
+
+```{r estadisticas_resumen}
+# Agrupamos por Nivel de Uso (el bloque)
+resumen_uso <- datos_telefonia %>%
+  group_by(Nivel_Uso) %>%
+  summarise(
+    Promedio = mean(Costo),
+    Desviacion_estandar = sd(Costo),
+    n = n()
+  )
+
+kable(resumen_uso, caption = "Resumen por Nivel de Uso")
+
+# Agrupamos por Compañía (el tratamiento)
+resumen_compania <- datos_telefonia %>%
+  group_by(Compania) %>%
+  summarise(
+    Promedio = mean(Costo),
+    Desviacion_estandar = sd(Costo),
+    n = n()
+  )
+
+kable(resumen_compania, caption = "Resumen por Compañía")
+```
+
+## 4. Análisis Exploratorio Visual
+
+Utilizamos diagramas de caja (boxplots) para visualizar las diferencias, siguiendo el estilo visto en clase.
+```{r analisis_visual}
 # Gráfico de cajas por Compañía
 ggplot(datos_telefonia, aes(x = Compania, y = Costo, fill = Compania)) +
-  geom_boxplot() +
-  labs(title = "Distribución de Costos por Compañía",
-       subtitle = "Sin diferenciar por nivel de uso",
+  geom_boxplot(position = position_dodge(0.8), alpha = 0.7) +
+  labs(title = "Comparación de Costos por Compañía",
+       subtitle = "Distribución general sin separar por nivel",
        x = "Compañía",
+       y = "Costo Mensual ($)") +
+  coord_flip() + # Volteamos para mejor legibilidad como en el ejemplo
+  theme_minimal()
+
+
+# Gráfico de cajas por Nivel de Uso
+ggplot(datos_telefonia, aes(x = Nivel_Uso, y = Costo, fill = Nivel_Uso)) +
+  geom_boxplot(position = position_dodge(0.8), alpha = 0.7) +
+  labs(title = "Comparación de Costos por Nivel de Uso",
+       subtitle = "Efecto de los bloques",
+       x = "Nivel de Uso",
        y = "Costo Mensual ($)") +
   theme_minimal()
 
 
-# Gráfico de interacción visual (Costo vs Compañía, coloreado por Nivel)
+# Gráfico de líneas para visualizar posibles interacciones
 ggplot(datos_telefonia, aes(x = Compania, y = Costo, group = Nivel_Uso, color = Nivel_Uso)) +
-  geom_line() +
+  geom_line(size = 1) +
   geom_point(size = 3) +
-  labs(title = "Perfil de Costos: Compañía vs Nivel de Uso",
+  labs(title = "Perfil de Costos: Interacción Compañía - Nivel de Uso",
        x = "Compañía",
-       y = "Costo ($)",
-       color = "Nivel de Uso") +
+       y = "Costo ($)") +
   theme_minimal()
+
 ```
 
-Observación: Visualmente, las líneas son bastante paralelas y los costos entre compañías parecen muy similares dentro de cada nivel (aunque el nivel de uso cambia drásticamente el costo).
+Observación: Las líneas son casi perfectamente paralelas, lo que visualmente sugiere que no hay interacción significativa entre la compañía y el nivel de uso. El efecto del nivel de uso es constante sin importar la compañía.
 
-## 4. Tabla de Análisis de Varianza (ANOVA)
+## 5. Tabla de Análisis de Varianza (ANOVA)
 
-Realizamos un ANOVA de dos factores sin interacción (Diseño de Bloques Completos al Azar).
+Realizamos un ANOVA de dos factores.
 
- * Factor de Interés (Tratamiento): Compañía.
+Nota Técnica sobre la Interacción
 
- * Factor de Bloqueo: Nivel de Uso.
+En clase vimos modelos con interacción (y ~ A * B). Sin embargo, en este experimento específico, solo tenemos una observación por cada combinación de Compañía y Nivel de Uso (no hay réplicas dentro de las celdas).
+Matemáticamente, esto impide calcular la interacción (los grados de libertad del error serían cero). Por lo tanto, utilizamos el modelo aditivo (y ~ A + B), que asume que no hay interacción, tal como lo indica la instrucción de la tarea ("sin interacciones").
 ```{r anova}
-# Modelo: Costo en función de Compañía (Tratamiento) + Nivel_Uso (Bloque)
+# Modelo Aditivo: Costo ~ Factor1 + Factor2
 modelo_anova <- aov(Costo ~ Compania + Nivel_Uso, data = datos_telefonia)
 
 # Mostramos la tabla resumen del ANOVA
 summary(modelo_anova)
 ```
 
-## 5. Interpretación de Resultados
+## 6. Verificación de Supuestos del Modelo
 
-A continuación, interpretamos los resultados con un nivel de confianza del 95% ($\alpha = 0.05$).
+Para que las conclusiones del ANOVA sean válidas, debemos verificar que los residuos del modelo cumplan con los supuestos de normalidad y homocedasticidad (varianza constante).
+
+```{r verificacion_supuestos}
+# Extraemos los residuos y valores predichos del modelo
+datos_telefonia$residuos <- residuals(modelo_anova)
+datos_telefonia$predichos <- fitted(modelo_anova)
+
+# 1. Prueba de Normalidad (Shapiro-Wilk)
+# H0: Los residuos siguen una distribución normal
+shapiro_test <- shapiro.test(datos_telefonia$residuos)
+print(shapiro_test)
+
+# Gráfico Q-Q para inspección visual de normalidad
+ggplot(datos_telefonia, aes(sample = residuos)) +
+  stat_qq() + stat_qq_line(color = "red") +
+  labs(title = "Q-Q Plot de Normalidad de Residuos",
+       subtitle = "Los puntos deben seguir la línea roja") +
+  theme_minimal()
+
+# 2. Homocedasticidad (Residuos vs Predichos)
+# Buscamos una distribución aleatoria sin patrones (como embudos)
+ggplot(datos_telefonia, aes(x = predichos, y = residuos)) +
+  geom_point(size = 3, color = "blue", alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuos vs Valores Predichos",
+       subtitle = "Verificación de Homocedasticidad",
+       x = "Valores Predichos",
+       y = "Residuos") +
+  theme_minimal()
+```
+
+Interpretación de Supuestos:
+
+ * Normalidad: Si el valor $p$ de Shapiro-Wilk es > 0.05 y los puntos en el Q-Q Plot se ajustan a la línea, asumimos normalidad.
+
+* Homocedasticidad: Si el gráfico de residuos no muestra patrones claros (como una forma de cono), asumimos varianza constante.
+
+## 7. Interpretación de Resultados
+
+Interpretamos los resultados con un nivel de confianza del 95% ($\alpha = 0.05$).
 
 A. Efecto de las Compañías (Tratamientos)
 
- * Hipótesis Nula ($H_0$): No hay diferencia en los costos promedios entre las compañías ($\mu_A = \mu_B = \mu_C = \mu_D$).
+ * Hipótesis ($H_0$): $\mu_A = \mu_B = \mu_C = \mu_D$.
 
- * Resultado: Observamos el valor $p$ (Pr(>F)) para la fila Compania.
+ * Valor p: 0.364
 
- * Conclusión: El valor $p$ es 0.364. Como $0.364 > 0.05$, no rechazamos la hipótesis nula.
- 
-   * Esto significa que, estadísticamente, no existe evidencia suficiente para afirmar que una compañía es más cara o barata que las otras en promedio, una vez que controlamos por el nivel de uso.
+ * Conclusión: Como $p > 0.05$, no rechazamos $H_0$. No hay evidencia de diferencias significativas en los costos promedio entre las compañías.
 
 B. Efecto del Nivel de Uso (Bloques)
 
- * Hipótesis Nula ($H_0$): No hay diferencia en los costos promedios entre los niveles de uso.
+ * Hipótesis ($H_0$): Las medias de los niveles de uso son iguales.
 
- * Resultado: El valor $p$ para Nivel_Uso es < 2e-16 (extremadamente pequeño, apareciendo con ***).
+ * Valor p: $< 2 \times 10^{-16}$ (Significativo ***)
 
- * Conclusión: Como $p < 0.05$, rechazamos la hipótesis nula.
+ * Conclusión: Como $p < 0.05$, rechazamos $H_0$. El nivel de uso afecta significativamente el costo.
 
-   * Esto confirma que el nivel de uso tiene un impacto dramático y significativo en el costo. Esto valida la decisión de usar bloques: si no hubiéramos bloqueado por nivel de uso, la variabilidad de los costos (de 23 a 326 dólares) habría ocultado cualquier comparación entre compañías.
+## 8. Pruebas Post-hoc (Tukey)
 
-## Conclusión Final para el Cliente
+Dado que el ANOVA mostró diferencias significativas para el factor Nivel de Uso, realizamos la prueba de Tukey para ver exactamente qué niveles difieren entre sí.
 
-El grupo de vigilancia puede informar a los consumidores que, con un 95% de confianza, no hay diferencias significativas en los precios promedios entre las cuatro compañías. La elección de la compañía no parece afectar el costo final tanto como lo hace el nivel de consumo del usuario.
+```{r tukey}
+# Aplicamos TukeyHSD al modelo
+tukey_resultado <- TukeyHSD(modelo_anova, which = "Nivel_Uso")
+
+# Mostramos los resultados
+print(tukey_resultado)
+
+# Visualizamos los intervalos de confianza de las diferencias
+plot(tukey_resultado, las=1)
+```
+
+**Interpretación de Tukey:**
+Todas las comparaciones entre niveles (Medio-Bajo, Alto-Bajo, Alto-Medio) muestran diferencias significativas (p adj = 0), confirmando que cada salto en el nivel de uso incrementa el costo de manera estadísticamente distinguible.
