@@ -1,0 +1,129 @@
+---
+title: "Tarea: ANOVA de 2 Factores - Costos de Telefonía"
+author: "David Quintela"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: flatly
+    toc: true
+    toc_float: true
+    code_folding: show
+  df_print: paged
+  github_document: default
+  pdf_document:
+    toc: true
+  knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, output_format = "all") })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+```
+
+## 1. Introducción y Carga de Librerías
+
+Para este análisis, utilizaremos las librerías estándar del tidyverse para manipulación y visualización, y knitr para la presentación de tablas.
+```{r librerias}
+library(tidyverse)
+library(knitr)
+```
+
+## 2. Carga de Datos
+
+Los datos provienen de un experimento para comparar los costos mensuales de cuatro compañías de telefonía celular (A, B, C, D), controlando por tres niveles de uso (Bajo, Medio, Alto).
+
+Ingresamos los datos manualmente basados en la tabla proporcionada:
+```{r carga_datos}
+# Definimos los vectores de datos
+costos <- c(27, 24, 31, 23,     # Nivel Bajo
+            68, 76, 65, 67,     # Nivel Medio
+            308, 326, 312, 300) # Nivel Alto
+
+# Creamos los factores correspondientes
+# Nivel de Uso: Repetimos cada nivel 4 veces (porque hay 4 compañías por nivel)
+nivel_uso <- factor(rep(c("Bajo", "Medio", "Alto"), each = 4), 
+                    levels = c("Bajo", "Medio", "Alto"))
+
+# Compañía: Repetimos la secuencia A,B,C,D 3 veces (una vez por cada nivel)
+compania <- factor(rep(c("A", "B", "C", "D"), 3))
+
+# Creamos el DataFrame
+datos_telefonia <- data.frame(
+  Nivel_Uso = nivel_uso,
+  Compania = compania,
+  Costo = costos
+)
+
+# Mostramos la tabla para verificar que coincida con la imagen
+kable(datos_telefonia, caption = "Datos de Costos Mensuales")
+```
+
+## 3. Análisis Exploratorio
+
+Antes de realizar el ANOVA, visualicemos los datos para entender el comportamiento de los costos por compañía y por nivel de uso.
+```{r EDA}
+# Gráfico de cajas por Compañía
+ggplot(datos_telefonia, aes(x = Compania, y = Costo, fill = Compania)) +
+  geom_boxplot() +
+  labs(title = "Distribución de Costos por Compañía",
+       subtitle = "Sin diferenciar por nivel de uso",
+       x = "Compañía",
+       y = "Costo Mensual ($)") +
+  theme_minimal()
+
+
+# Gráfico de interacción visual (Costo vs Compañía, coloreado por Nivel)
+ggplot(datos_telefonia, aes(x = Compania, y = Costo, group = Nivel_Uso, color = Nivel_Uso)) +
+  geom_line() +
+  geom_point(size = 3) +
+  labs(title = "Perfil de Costos: Compañía vs Nivel de Uso",
+       x = "Compañía",
+       y = "Costo ($)",
+       color = "Nivel de Uso") +
+  theme_minimal()
+```
+
+Observación: Visualmente, las líneas son bastante paralelas y los costos entre compañías parecen muy similares dentro de cada nivel (aunque el nivel de uso cambia drásticamente el costo).
+
+## 4. Tabla de Análisis de Varianza (ANOVA)
+
+Realizamos un ANOVA de dos factores sin interacción (Diseño de Bloques Completos al Azar).
+
+ * Factor de Interés (Tratamiento): Compañía.
+
+ * Factor de Bloqueo: Nivel de Uso.
+```{r anova}
+# Modelo: Costo en función de Compañía (Tratamiento) + Nivel_Uso (Bloque)
+modelo_anova <- aov(Costo ~ Compania + Nivel_Uso, data = datos_telefonia)
+
+# Mostramos la tabla resumen del ANOVA
+summary(modelo_anova)
+```
+
+## 5. Interpretación de Resultados
+
+A continuación, interpretamos los resultados con un nivel de confianza del 95% ($\alpha = 0.05$).
+
+A. Efecto de las Compañías (Tratamientos)
+
+ * Hipótesis Nula ($H_0$): No hay diferencia en los costos promedios entre las compañías ($\mu_A = \mu_B = \mu_C = \mu_D$).
+
+ * Resultado: Observamos el valor $p$ (Pr(>F)) para la fila Compania.
+
+ * Conclusión: El valor $p$ es 0.364. Como $0.364 > 0.05$, no rechazamos la hipótesis nula.
+ 
+   * Esto significa que, estadísticamente, no existe evidencia suficiente para afirmar que una compañía es más cara o barata que las otras en promedio, una vez que controlamos por el nivel de uso.
+
+B. Efecto del Nivel de Uso (Bloques)
+
+ * Hipótesis Nula ($H_0$): No hay diferencia en los costos promedios entre los niveles de uso.
+
+ * Resultado: El valor $p$ para Nivel_Uso es < 2e-16 (extremadamente pequeño, apareciendo con ***).
+
+ * Conclusión: Como $p < 0.05$, rechazamos la hipótesis nula.
+
+   * Esto confirma que el nivel de uso tiene un impacto dramático y significativo en el costo. Esto valida la decisión de usar bloques: si no hubiéramos bloqueado por nivel de uso, la variabilidad de los costos (de 23 a 326 dólares) habría ocultado cualquier comparación entre compañías.
+
+## Conclusión Final para el Cliente
+
+El grupo de vigilancia puede informar a los consumidores que, con un 95% de confianza, no hay diferencias significativas en los precios promedios entre las cuatro compañías. La elección de la compañía no parece afectar el costo final tanto como lo hace el nivel de consumo del usuario.
