@@ -100,19 +100,22 @@ Generamos una tabla detallada con estadísticas descriptivas para cada conglomer
 resumen_nidadas <- coots %>%
   group_by(clutch) %>%
   summarise(
-    media = mean(volume),
+    media = mean(volume),          # y_bar_i
+    M_i = mean(csize),             # Tamaño del cluster (csize es constante por nido)
     sd = sd(volume),
     min = min(volume),
     max = max(volume),
     rango = diff(range(volume)),
-    cant = n()
+    cant = n()                     # Tamaño de la muestra (m_i = 2)
   ) %>%
   arrange(media) %>%
-  mutate(orden = row_number()) # Añadimos orden para gráficos futuros
+  mutate(orden = row_number())
 
-# Mostramos las primeras filas del resumen
+# Mostramos las primeras filas del resumen para verificar M_i
 head(resumen_nidadas)
 ```
+
+**Observamos** que M_i (el tamaño real del nido) varía (ej. 6, 9, 10, 11, 12, 13 huevos), aunque nuestra muestra cant sea siempre 2. Esto confirma que debemos ponderar.
 
 ### 3.3 Visualización de la Variabilidad
 
@@ -169,75 +172,85 @@ fig_b
 
 **Tarea 2: Estimar el promedio poblacional del volumen del huevo.**
 
-Dado que el diseño es balanceado en la muestra (se tomaron exactamente 2 huevos por cada nido), el promedio simple de todas las observaciones coincide con el estimador de razón y es insesgado.
+Al tener conglomerados de distintos tamaños ($M_i$ variable), el promedio simple de las medias de los nidos es un estimador sesgado. Debemos usar el Estimador de Razón ($\hat{\bar{Y}}_R$), que pondera cada media por el tamaño de su nido.
 
-```{r estimacion_puntual_simple}
-# Estimación puntual simple
-promedio_poblacional <- mean(coots$volume)
-
-cat("El volumen promedio estimado del huevo es:", round(promedio_poblacional, 4))
-```
-
+$$ \hat{\bar{Y}}{R} = \frac{\sum{i=1}^n M_i \bar{y}i}{\sum{i=1}^n M_i} $$
 Verificamos que esto es igual al promedio de los promedios de las nidadas (debido al tamaño de muestra constante $m_i = 2$).
 
-```{r promedio_promedios_nidadas}
-mean(resumen_nidadas$media)
+```{r promedio_estimado_ponderado}
+# Numerador: Suma de los totales estimados por nido (M_i * media_i)
+numerador <- sum(resumen_nidadas$M_i * resumen_nidadas$media)
+
+# Denominador: Suma de los tamaños de los nidos
+denominador <- sum(resumen_nidadas$M_i)
+
+# Estimador de Razón
+promedio_ponderado <- numerador / denominador
+
+cat("El volumen promedio estimado (Ponderado) es:", round(promedio_ponderado, 4))
 ```
 
+Comparación con el promedio simple (Sesgado)
+
+```{r comparacion_promedio_simple}
+promedio_simple <- mean(resumen_nidadas$media)
+cat("Promedio Simple (Sin ponderar):", round(promedio_simple, 4), "\n")
+cat("Diferencia:", round(promedio_ponderado - promedio_simple, 4))
+```
 ## 5. Estimación del Error Estándar (SE)
 
 **Tarea 3: Investigar y calcular el error estándar del estimador.**
 
-En un muestreo por conglomerados, las observaciones dentro del mismo grupo (nido) tienden a parecerse más entre sí que a las de otros grupos (correlación intraclase). Por lo tanto, no podemos usar la fórmula estándar de Muestreo Aleatorio Simple ($s / \sqrt{n_{total}}$) porque subestimaríamos el error, estariamos ignorando la correlación entre huevos del mismo nido.
+Dado que usamos un estimador de razón, el error estándar también cambia. Ya no usamos la varianza simple de las medias, sino la varianza de los residuos ponderados.
 
-Para un diseño de dos etapas, la varianza del estimador de la media $\bar{y}$ depende de dos componentes:
+La fórmula aproximada para el Error Estándar del estimador de razón en muestreo por conglomerados es:
 
- 1. La varianza entre las unidades primarias (nidadas).
-
- 2. La varianza entre las unidades secundarias (huevos dentro de nidadas).
-
-Sin embargo, Lohr (2010) (el libro que nos mostro) y otros textos de muestreo establecen que si la fracción de muestreo de la primera etapa es pequeña, la variabilidad está dominada por la diferencia entre los conglomerados (lo que visualizamos en la Figura B).
-
-Podemos usar el método de las Unidades Primarias (Ultimate Cluster). Tratamos las medias de cada nido como si fueran nuestros datos observados.
-
-El Error Estándar ($SE$) se estima como:
-
-$$ SE(\bar{y}) = \frac{s_{\bar{y}}}{\sqrt{n}} $$
+$$ SE(\hat{\bar{Y}}_R) \approx \frac{1}{\bar{M}} \sqrt{\frac{s_r^2}{n}} $$
 
 Donde:
 
- * $s_{\bar{y}}$ es la desviación estándar de las medias de las nidadas (calculada en nuestra tabla resumen_nidadas).
-   * En lugar de mirar la varianza de cada huevo individual, calculamos qué tan diferentes son los *promedios de los nidos* entre sí.
+ * $\bar{M}$ es el tamaño promedio de los nidos en la muestra.
 
- * $n$ es el número de nidadas (no el número total de huevos).
-   * Dividimos por la raíz del número de **nidos** ($n=184$), no del total de huevos. Esto es crucial porque en la etapa 1 seleccionamos nidos, y esa es nuestra unidad principal de independencia estadística.
+ * $s_r^2$ es la varianza de los valores $u_i$, donde $u_i = M_i (\bar{y}_i - \hat{\bar{Y}}_R)$.
+
+ * $n$ es el número de nidos.
+
+Este método captura la variabilidad "entre" conglomerados ajustada por su tamaño.
 
 ```{r estimacion_SE}
-# 1. Identificar n (número de conglomerados)
-n_clutches <- length(unique(coots$clutch))
+# 1. Definir n (número de nidos)
+n_clutches <- nrow(resumen_nidadas)
 
-# 2. Calcular la desviación estándar DE LAS MEDIAS de las nidadas
-sd_entre_nidadas <- sd(resumen_nidadas$media)
+# 2. Calcular M promedio (tamaño promedio del nido)
+M_bar <- mean(resumen_nidadas$M_i)
 
-# 3. Calcular el Error Estándar
-error_estandar <- sd_entre_nidadas / sqrt(n_clutches)
+# 3. Calcular la variable auxiliar u_i (Residuos ponderados)
+# u_i representa cuánto se desvía el total del nido i respecto a lo esperado por el promedio global
+resumen_nidadas <- resumen_nidadas %>%
+  mutate(u_i = M_i * (media - promedio_ponderado))
+
+# 4. Calcular la varianza de u_i (s_r^2)
+s2_r <- var(resumen_nidadas$u_i)
+
+# 5. Calcular Error Estándar (SE)
+error_estandar_ratio <- (1 / M_bar) * sqrt(s2_r / n_clutches)
 
 cat("Número de nidadas (n):", n_clutches, "\n")
-cat("Desviación estándar entre nidadas:", round(sd_entre_nidadas, 4), "\n")
-cat("Error Estándar (SE) estimado:", round(error_estandar, 4))
+cat("Tamaño promedio del nido (M_bar):", round(M_bar, 2), "\n")
+cat("Error Estándar (SE) corregido:", round(error_estandar_ratio, 4))
 ```
 
-**Comparación e Interpretación**
+**Comparación de Errores**
+```{r}
+# Recalculamos el anterior para comparar
+sd_entre_nidadas <- sd(resumen_nidadas$media)
+se_simple <- sd_entre_nidadas / sqrt(n_clutches)
 
-Si hubiéramos ignorado el diseño de conglomerados y tratado esto como una muestra simple (SRS) de `r nrow(coots)` huevos, el error estándar sería:
-
-```{r comparacion_SRS}
-se_srs <- sd(coots$volume) / sqrt(nrow(coots))
-cat("SE asumiendo Muestreo Simple (Incorrecto):", round(se_srs, 4), "\n")
-cat("SE considerando Conglomerados (Correcto):", round(error_estandar, 4), "\n")
+cat("SE (Método Simple - Incorrecto para M variable):", round(se_simple, 4), "\n")
+cat("SE (Método de Razón - Correcto):", round(error_estandar_ratio, 4), "\n")
 ```
 
-**Interpretación:** El error estándar correcto (`r round(error_estandar, 4)`) es mayor que el de muestreo simple (`r round(se_srs, 4)`). Esto confirma el "Efecto de Diseño": los huevos dentro de un nido son similares entre sí, por lo que aportan menos información nueva que huevos independientes.
+**Interpretación:** El cálculo correcto ajusta la incertidumbre considerando que los nidos más grandes tienen más peso en la estimación final.
 
 ## 6. Intervalo de Confianza
 
@@ -245,13 +258,13 @@ Finalmente, reportamos el resultado con un intervalo de confianza al 95%.
 
 ```{r intervalo_confianza}
 alpha <- 0.05
-t_value <- qt(1 - alpha/2, df = n_clutches - 1) # Grados de libertad basados en n clusters
+t_value <- qt(1 - alpha/2, df = n_clutches - 1) 
 
-lim_inf <- promedio_poblacional - t_value * error_estandar
-lim_sup <- promedio_poblacional + t_value * error_estandar
+lim_inf <- promedio_ponderado - t_value * error_estandar_ratio
+lim_sup <- promedio_ponderado + t_value * error_estandar_ratio
 
 cat("Intervalo de Confianza 95%: [", round(lim_inf, 3), ", ", round(lim_sup, 3), "]")
 ```
 
 **Reporte Final:**
-Se estima que el volumen promedio de los huevos en la población es de `r round(promedio_poblacional, 3)` pulgadas cúbicas, con un error estándar de `r round(error_estandar, 3)`.
+Utilizando un estimador de razón para corregir por los tamaños variables de las nidadas, se estima que el volumen promedio de los huevos en la población es de `r round(promedio_ponderado, 3)` pulgadas cúbicas, con un error estándar de `r round(error_estandar_ratio, 3)`.

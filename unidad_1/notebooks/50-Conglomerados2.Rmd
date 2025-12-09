@@ -91,6 +91,4 @@ fig_b <- ggplot(resumen_nidadas, aes(x = clutch, y = media)) +
   theme_minimal()
 
 fig_b
-
-
 ```
