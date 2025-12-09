@@ -1,0 +1,257 @@
+---
+title: "Análisis de Muestreo por Conglomerados en 2 Etapas: Datos Coots"
+author: "David Quintela"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: true
+  df_print: paged
+  github_document: default
+  html_document:
+    theme: flatly
+    toc: true
+    toc_float: true
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+```
+
+## 1. Introducción y Contexto
+
+El objetivo de este estudio es analizar el volumen de los huevos de la negreta Minnedosa (Manitoba), basándonos en el trabajo de Arnold (1991).
+
+Para realizar inferencias estadísticas correctas, es crucial entender el diseño muestral utilizado.
+
+### 1.1 Carga de Librerías y Datos
+
+Primero, cargamos las herramientas necesarias y el conjunto de datos coots proveniente del paquete SDaA.
+
+```{r librerias}
+library(SDaA)       # Contiene el dataset 'coots'
+library(tidyverse)  # Para manipulación de datos y gráficos
+library(gridExtra)  # Para arreglos de gráficos
+```
+
+```{r carga_datos}
+data(coots)
+
+# Visualizamos las primeras filas para entender la estructura
+head(coots)
+
+# Dimensiones del dataset
+dim(coots)
+```
+
+## 2. Descripción del Diseño de Muestreo
+
+**Tarea 1: Describir cómo este estudio representa un muestreo por conglomerados de 2 etapas.**
+
+Para identificar el diseño, debemos observar la jerarquía de los datos:
+
+ 1. **Población Objetivo:** Todos los huevos de negreta en la zona de estudio.
+
+ 2. **Unidades Primarias de Muestreo (PSU - Etapa 1):** Las **nidadas (clutches)** o nidos.
+
+    * En lugar de buscar huevos individuales dispersos por todo el pantano (lo cual sería Muestreo Aleatorio Simple y muy costoso), primero se identifican y seleccionan nidos.
+
+ 3. **Unidades Secundarias de Muestreo (SSU - Etapa 2):** Los **huevos** dentro de esos nidos.
+
+    * La clave que define la "Segunda Etapa" es que **no se midieron todos los huevos** de cada nido seleccionado. La descripción del problema indica que tenemos una "submuestra de huevos" (específicamente 2 huevos por nidada para este ejercicio).
+
+**Conclusión:**
+Es un diseño en **dos etapas** porque hay dos procesos de selección aleatoria (o asumida aleatoria): primero seleccionamos el grupo (nido) y luego seleccionamos individuos dentro del grupo (huevos). Si hubiéramos medido todos los huevos del nido, sería de una sola etapa.
+
+## 3. Exploración de Datos (EDA)
+
+Antes de estimar, realizamos un análisis exploratorio detallado para entender la variabilidad intra e inter nidadas, siguiendo la metodología base del curso.
+
+### 3.1 Inspección Inicial de Variables
+
+Comenzamos con un resumen estadístico general de todas las variables y verificamos la estructura de los conglomerados.
+
+```{r resumen_general}
+# Resumen general de las variables
+summary(coots)
+```
+
+Confirmamos el número total de unidades primarias (nidadas) en la muestra:
+
+```{r conteo_nidadas_unicas}
+# Conteo de nidadas únicas
+length(unique(coots$clutch))
+```
+
+Verificamos el tamaño de muestra dentro de cada conglomerado para confirmar si el diseño es balanceado (mismo número de huevos por nido).
+
+```{r conteo_obs_x_nidada}
+# Conteo de observaciones por nidada
+coots %>% group_by(clutch) %>% summarise(cant=n())
+```
+
+### 3.2 Resumen Estadístico por Nidada
+
+Generamos una tabla detallada con estadísticas descriptivas para cada conglomerado.
+
+```{r resumen_estadistico_x_nidada}
+# Crear resumen detallado por nidada (Basado en 50-Conglomerados2.Rmd)
+resumen_nidadas <- coots %>%
+  group_by(clutch) %>%
+  summarise(
+    media = mean(volume),
+    sd = sd(volume),
+    min = min(volume),
+    max = max(volume),
+    rango = diff(range(volume)),
+    cant = n()
+  ) %>%
+  arrange(media) %>%
+  mutate(orden = row_number()) # Añadimos orden para gráficos futuros
+
+# Mostramos las primeras filas del resumen
+head(resumen_nidadas)
+```
+
+### 3.3 Visualización de la Variabilidad
+
+A continuación, replicamos las gráficas de análisis para visualizar la dispersión.
+
+**Figura A: Datos individuales y Medias**
+Esta gráfica nos permite ver la dispersión de los huevos (puntos grises) respecto a la media de su nido (rombos rojos).
+
+```{r figura_a}
+# Versión 1: Puntos individuales (Figura A)
+fig_a <- ggplot(coots, aes(x = as.factor(clutch), y = volume)) +
+  geom_point(alpha = 0.6, size = 1.5) +
+  geom_line(aes(group = clutch), alpha = 0.3) +
+  stat_summary(fun = mean, geom = "point", 
+               color = "red", size = 2, shape = 18) +
+  labs(
+    title = "Gráfica A: Volúmenes de huevo por nidada",
+    subtitle = "Puntos: huevos individuales | Diamantes rojos: media por nidada",
+    x = "Número de nidada",
+    y = "Volumen del huevo"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()
+  )
+
+fig_a
+```
+
+**Figura B: Distribución de las Medias**
+Esta gráfica aísla las medias de cada nido. La dispersión que vemos aquí representa la **varianza entre conglomerados**, que es el componente principal de nuestro error de muestreo.
+
+```{r figura_b}
+# Figura B: Solo medias (Basado en 50-Conglomerados2.Rmd)
+fig_b <- ggplot(resumen_nidadas, aes(x = clutch, y = media)) +
+  geom_point(alpha = 0.7, size = 1.5, color = "darkblue") +
+  geom_hline(yintercept = mean(resumen_nidadas$media), 
+             linetype = "dashed", color = "red") +
+  labs(
+    title = "Figura B: Medias por nidada",
+    subtitle = "Visualización de la variabilidad ENTRE conglomerados",
+    x = "Número de nidada",
+    y = "Volumen medio del huevo"
+  ) +
+  theme_minimal()
+
+fig_b
+```
+
+## 4. Estimación Puntual
+
+**Tarea 2: Estimar el promedio poblacional del volumen del huevo.**
+
+Dado que el diseño es balanceado en la muestra (se tomaron exactamente 2 huevos por cada nido), el promedio simple de todas las observaciones coincide con el estimador de razón y es insesgado.
+
+```{r estimacion_puntual_simple}
+# Estimación puntual simple
+promedio_poblacional <- mean(coots$volume)
+
+cat("El volumen promedio estimado del huevo es:", round(promedio_poblacional, 4))
+```
+
+Verificamos que esto es igual al promedio de los promedios de las nidadas (debido al tamaño de muestra constante $m_i = 2$).
+
+```{r promedio_promedios_nidadas}
+mean(resumen_nidadas$media)
+```
+
+## 5. Estimación del Error Estándar (SE)
+
+**Tarea 3: Investigar y calcular el error estándar del estimador.**
+
+En un muestreo por conglomerados, las observaciones dentro del mismo grupo (nido) tienden a parecerse más entre sí que a las de otros grupos (correlación intraclase). Por lo tanto, no podemos usar la fórmula estándar de Muestreo Aleatorio Simple ($s / \sqrt{n_{total}}$) porque subestimaríamos el error, estariamos ignorando la correlación entre huevos del mismo nido.
+
+Para un diseño de dos etapas, la varianza del estimador de la media $\bar{y}$ depende de dos componentes:
+
+ 1. La varianza entre las unidades primarias (nidadas).
+
+ 2. La varianza entre las unidades secundarias (huevos dentro de nidadas).
+
+Sin embargo, Lohr (2010) (el libro que nos mostro) y otros textos de muestreo establecen que si la fracción de muestreo de la primera etapa es pequeña, la variabilidad está dominada por la diferencia entre los conglomerados (lo que visualizamos en la Figura B).
+
+Podemos usar el método de las Unidades Primarias (Ultimate Cluster). Tratamos las medias de cada nido como si fueran nuestros datos observados.
+
+El Error Estándar ($SE$) se estima como:
+
+$$ SE(\bar{y}) = \frac{s_{\bar{y}}}{\sqrt{n}} $$
+
+Donde:
+
+ * $s_{\bar{y}}$ es la desviación estándar de las medias de las nidadas (calculada en nuestra tabla resumen_nidadas).
+   * En lugar de mirar la varianza de cada huevo individual, calculamos qué tan diferentes son los *promedios de los nidos* entre sí.
+
+ * $n$ es el número de nidadas (no el número total de huevos).
+   * Dividimos por la raíz del número de **nidos** ($n=184$), no del total de huevos. Esto es crucial porque en la etapa 1 seleccionamos nidos, y esa es nuestra unidad principal de independencia estadística.
+
+```{r estimacion_SE}
+# 1. Identificar n (número de conglomerados)
+n_clutches <- length(unique(coots$clutch))
+
+# 2. Calcular la desviación estándar DE LAS MEDIAS de las nidadas
+sd_entre_nidadas <- sd(resumen_nidadas$media)
+
+# 3. Calcular el Error Estándar
+error_estandar <- sd_entre_nidadas / sqrt(n_clutches)
+
+cat("Número de nidadas (n):", n_clutches, "\n")
+cat("Desviación estándar entre nidadas:", round(sd_entre_nidadas, 4), "\n")
+cat("Error Estándar (SE) estimado:", round(error_estandar, 4))
+```
+
+**Comparación e Interpretación**
+
+Si hubiéramos ignorado el diseño de conglomerados y tratado esto como una muestra simple (SRS) de `r nrow(coots)` huevos, el error estándar sería:
+
+```{r comparacion_SRS}
+se_srs <- sd(coots$volume) / sqrt(nrow(coots))
+cat("SE asumiendo Muestreo Simple (Incorrecto):", round(se_srs, 4), "\n")
+cat("SE considerando Conglomerados (Correcto):", round(error_estandar, 4), "\n")
+```
+
+**Interpretación:** El error estándar correcto (`r round(error_estandar, 4)`) es mayor que el de muestreo simple (`r round(se_srs, 4)`). Esto confirma el "Efecto de Diseño": los huevos dentro de un nido son similares entre sí, por lo que aportan menos información nueva que huevos independientes.
+
+## 6. Intervalo de Confianza
+
+Finalmente, reportamos el resultado con un intervalo de confianza al 95%.
+
+```{r intervalo_confianza}
+alpha <- 0.05
+t_value <- qt(1 - alpha/2, df = n_clutches - 1) # Grados de libertad basados en n clusters
+
+lim_inf <- promedio_poblacional - t_value * error_estandar
+lim_sup <- promedio_poblacional + t_value * error_estandar
+
+cat("Intervalo de Confianza 95%: [", round(lim_inf, 3), ", ", round(lim_sup, 3), "]")
+```
+
+**Reporte Final:**
+Se estima que el volumen promedio de los huevos en la población es de `r round(promedio_poblacional, 3)` pulgadas cúbicas, con un error estándar de `r round(error_estandar, 3)`.
